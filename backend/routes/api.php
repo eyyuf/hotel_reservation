@@ -20,6 +20,7 @@ Route::post(
     [AuthController::class, 'login']
 );
 
+// TODO: Protect logout, me and profile with auth:sanctum and active middleware.
 Route::post(
     '/v1/auth/logout',
     [AuthController::class, 'logout']
@@ -62,6 +63,8 @@ Route::get(
 );
 
 // Super-admin routes
+// TODO: Protect super-admin routes with:
+// auth:sanctum, active and role:super_admin.
 Route::get(
     '/v1/super-admin/hotels',
     [SuperAdminController::class, 'hotels']
@@ -123,6 +126,8 @@ Route::get(
 );
 
 // Manager routes
+// TODO: Protect manager routes with:
+// auth:sanctum, active and role:hotel_manager.
 Route::get(
     '/v1/manager/hotel',
     [ManagerController::class, 'hotel']
@@ -204,6 +209,8 @@ Route::get(
 );
 
 // Guest reservation routes
+// TODO: Protect guest routes with:
+// auth:sanctum, active and role:guest.
 Route::get(
     '/v1/guest/reservations',
     [GuestReservationController::class, 'index']
@@ -241,12 +248,15 @@ Route::get(
 );
 
 // Simulated payment route
+// TODO: Allow simulated payment only in the local environment.
 Route::post(
     '/v1/payments/{payment}/simulate',
     [PaymentController::class, 'simulate']
 );
 
 // Receptionist routes
+// TODO: Protect receptionist routes with:
+// auth:sanctum, active and role:receptionist.
 Route::get(
     '/v1/receptionist/reservations',
     [ReceptionistController::class, 'index']
