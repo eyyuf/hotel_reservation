@@ -17,8 +17,19 @@ docs/      API endpoint blueprint
 ```bash
 cd backend
 composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
 php artisan serve
 ```
+
+In PowerShell, copy the environment file with:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Configure the PostgreSQL values in `.env` before running migrations.
 
 Inspect registered routes with:
 
