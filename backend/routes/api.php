@@ -9,89 +9,285 @@ use App\Http\Controllers\Api\V1\ReceptionistController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->group(function (): void {
-    // TODO: Add authentication and account middleware where required.
-    Route::prefix('auth')->controller(AuthController::class)->group(function (): void {
-        Route::post('register', 'register');
-        Route::post('login', 'login');
-        Route::post('logout', 'logout');
-        Route::get('me', 'me');
-        Route::patch('profile', 'profile');
-    });
+// Authentication routes
+Route::post(
+    '/v1/auth/register',
+    [AuthController::class, 'register']
+);
 
-    Route::controller(PublicHotelController::class)->group(function (): void {
-        Route::get('hotels', 'index');
-        Route::get('hotels/{hotel}', 'show');
-        Route::get('hotels/{hotel}/room-types', 'roomTypes');
-        Route::get('hotels/{hotel}/room-types/{roomType}', 'roomType');
-        Route::get('hotels/{hotel}/availability', 'availability');
-    });
+Route::post(
+    '/v1/auth/login',
+    [AuthController::class, 'login']
+);
 
-    // TODO: Protect with auth:sanctum, active-account and super_admin role middleware.
-    Route::prefix('super-admin')->controller(SuperAdminController::class)->group(function (): void {
-        Route::get('hotels', 'hotels');
-        Route::post('hotels', 'createHotel');
-        Route::get('hotels/{hotel}', 'hotel');
-        Route::patch('hotels/{hotel}', 'updateHotel');
-        Route::patch('hotels/{hotel}/status', 'hotelStatus');
-        Route::get('hotels/{hotel}/managers', 'managers');
-        Route::post('hotels/{hotel}/managers', 'createManager');
-        Route::get('managers/{manager}', 'showManager');
-        Route::patch('managers/{manager}', 'updateManager');
-        Route::patch('managers/{manager}/status', 'managerStatus');
-        Route::get('reports', 'reports');
-        Route::get('audit-logs', 'auditLogs');
-    });
+Route::post(
+    '/v1/auth/logout',
+    [AuthController::class, 'logout']
+);
 
-    // TODO: Protect with auth:sanctum, active-account and hotel_manager role middleware.
-    Route::prefix('manager')->controller(ManagerController::class)->group(function (): void {
-        Route::get('hotel', 'hotel');
-        Route::patch('hotel', 'updateHotel');
-        Route::get('receptionists', 'receptionists');
-        Route::post('receptionists', 'createReceptionist');
-        Route::get('receptionists/{receptionist}', 'receptionist');
-        Route::patch('receptionists/{receptionist}', 'updateReceptionist');
-        Route::patch('receptionists/{receptionist}/status', 'receptionistStatus');
-        Route::get('room-types', 'roomTypes');
-        Route::post('room-types', 'createRoomType');
-        Route::get('room-types/{roomType}', 'roomType');
-        Route::patch('room-types/{roomType}', 'updateRoomType');
-        Route::patch('room-types/{roomType}/status', 'roomTypeStatus');
-        Route::get('reservations', 'reservations');
-        Route::get('payments', 'payments');
-        Route::get('reports', 'reports');
-        Route::get('audit-logs', 'auditLogs');
-    });
+Route::get(
+    '/v1/auth/me',
+    [AuthController::class, 'me']
+);
 
-    // TODO: Protect guest routes with future authentication and guest role middleware.
-    Route::prefix('guest')->group(function (): void {
-        Route::prefix('reservations')->controller(GuestReservationController::class)->group(function (): void {
-            Route::get('/', 'index');
-            Route::post('/', 'store');
-            Route::get('{reservation}', 'show');
-            Route::post('{reservation}/cancel', 'cancel');
-        });
+Route::patch(
+    '/v1/auth/profile',
+    [AuthController::class, 'profile']
+);
 
-        Route::controller(PaymentController::class)->group(function (): void {
-            Route::get('reservations/{reservation}/payments', 'guestIndex');
-            Route::post('reservations/{reservation}/payments', 'guestStore');
-            Route::get('payments/{payment}', 'guestShow');
-        });
-    });
+// Public hotel routes
+Route::get(
+    '/v1/hotels',
+    [PublicHotelController::class, 'index']
+);
 
-    // TODO: Restrict this development route with future middleware.
-    Route::post('payments/{payment}/simulate', [PaymentController::class, 'simulate']);
+Route::get(
+    '/v1/hotels/{hotel}',
+    [PublicHotelController::class, 'show']
+);
 
-    // TODO: Protect with future authentication, active-account and receptionist role middleware.
-    Route::prefix('receptionist')->controller(ReceptionistController::class)->group(function (): void {
-        Route::get('reservations', 'index');
-        Route::post('reservations', 'store');
-        Route::get('reservations/{reservation}', 'show');
-        Route::patch('reservations/{reservation}', 'update');
-        Route::post('reservations/{reservation}/cancel', 'cancel');
-        Route::get('reservations/{reservation}/payments', 'payments');
-        Route::post('reservations/{reservation}/payments', 'recordPayment');
-        Route::post('reservations/{reservation}/check-in', 'checkIn');
-        Route::post('reservations/{reservation}/check-out', 'checkOut');
-    });
-});
+Route::get(
+    '/v1/hotels/{hotel}/room-types',
+    [PublicHotelController::class, 'roomTypes']
+);
+
+Route::get(
+    '/v1/hotels/{hotel}/room-types/{roomType}',
+    [PublicHotelController::class, 'roomType']
+);
+
+Route::get(
+    '/v1/hotels/{hotel}/availability',
+    [PublicHotelController::class, 'availability']
+);
+
+// Super-admin routes
+Route::get(
+    '/v1/super-admin/hotels',
+    [SuperAdminController::class, 'hotels']
+);
+
+Route::post(
+    '/v1/super-admin/hotels',
+    [SuperAdminController::class, 'createHotel']
+);
+
+Route::get(
+    '/v1/super-admin/hotels/{hotel}',
+    [SuperAdminController::class, 'hotel']
+);
+
+Route::patch(
+    '/v1/super-admin/hotels/{hotel}',
+    [SuperAdminController::class, 'updateHotel']
+);
+
+Route::patch(
+    '/v1/super-admin/hotels/{hotel}/status',
+    [SuperAdminController::class, 'hotelStatus']
+);
+
+Route::get(
+    '/v1/super-admin/hotels/{hotel}/managers',
+    [SuperAdminController::class, 'managers']
+);
+
+Route::post(
+    '/v1/super-admin/hotels/{hotel}/managers',
+    [SuperAdminController::class, 'createManager']
+);
+
+Route::get(
+    '/v1/super-admin/managers/{manager}',
+    [SuperAdminController::class, 'showManager']
+);
+
+Route::patch(
+    '/v1/super-admin/managers/{manager}',
+    [SuperAdminController::class, 'updateManager']
+);
+
+Route::patch(
+    '/v1/super-admin/managers/{manager}/status',
+    [SuperAdminController::class, 'managerStatus']
+);
+
+Route::get(
+    '/v1/super-admin/reports',
+    [SuperAdminController::class, 'reports']
+);
+
+Route::get(
+    '/v1/super-admin/audit-logs',
+    [SuperAdminController::class, 'auditLogs']
+);
+
+// Manager routes
+Route::get(
+    '/v1/manager/hotel',
+    [ManagerController::class, 'hotel']
+);
+
+Route::patch(
+    '/v1/manager/hotel',
+    [ManagerController::class, 'updateHotel']
+);
+
+Route::get(
+    '/v1/manager/receptionists',
+    [ManagerController::class, 'receptionists']
+);
+
+Route::post(
+    '/v1/manager/receptionists',
+    [ManagerController::class, 'createReceptionist']
+);
+
+Route::get(
+    '/v1/manager/receptionists/{receptionist}',
+    [ManagerController::class, 'receptionist']
+);
+
+Route::patch(
+    '/v1/manager/receptionists/{receptionist}',
+    [ManagerController::class, 'updateReceptionist']
+);
+
+Route::patch(
+    '/v1/manager/receptionists/{receptionist}/status',
+    [ManagerController::class, 'receptionistStatus']
+);
+
+Route::get(
+    '/v1/manager/room-types',
+    [ManagerController::class, 'roomTypes']
+);
+
+Route::post(
+    '/v1/manager/room-types',
+    [ManagerController::class, 'createRoomType']
+);
+
+Route::get(
+    '/v1/manager/room-types/{roomType}',
+    [ManagerController::class, 'roomType']
+);
+
+Route::patch(
+    '/v1/manager/room-types/{roomType}',
+    [ManagerController::class, 'updateRoomType']
+);
+
+Route::patch(
+    '/v1/manager/room-types/{roomType}/status',
+    [ManagerController::class, 'roomTypeStatus']
+);
+
+Route::get(
+    '/v1/manager/reservations',
+    [ManagerController::class, 'reservations']
+);
+
+Route::get(
+    '/v1/manager/payments',
+    [ManagerController::class, 'payments']
+);
+
+Route::get(
+    '/v1/manager/reports',
+    [ManagerController::class, 'reports']
+);
+
+Route::get(
+    '/v1/manager/audit-logs',
+    [ManagerController::class, 'auditLogs']
+);
+
+// Guest reservation routes
+Route::get(
+    '/v1/guest/reservations',
+    [GuestReservationController::class, 'index']
+);
+
+Route::post(
+    '/v1/guest/reservations',
+    [GuestReservationController::class, 'store']
+);
+
+Route::get(
+    '/v1/guest/reservations/{reservation}',
+    [GuestReservationController::class, 'show']
+);
+
+Route::post(
+    '/v1/guest/reservations/{reservation}/cancel',
+    [GuestReservationController::class, 'cancel']
+);
+
+// Guest payment routes
+Route::get(
+    '/v1/guest/reservations/{reservation}/payments',
+    [PaymentController::class, 'guestIndex']
+);
+
+Route::post(
+    '/v1/guest/reservations/{reservation}/payments',
+    [PaymentController::class, 'guestStore']
+);
+
+Route::get(
+    '/v1/guest/payments/{payment}',
+    [PaymentController::class, 'guestShow']
+);
+
+// Simulated payment route
+Route::post(
+    '/v1/payments/{payment}/simulate',
+    [PaymentController::class, 'simulate']
+);
+
+// Receptionist routes
+Route::get(
+    '/v1/receptionist/reservations',
+    [ReceptionistController::class, 'index']
+);
+
+Route::post(
+    '/v1/receptionist/reservations',
+    [ReceptionistController::class, 'store']
+);
+
+Route::get(
+    '/v1/receptionist/reservations/{reservation}',
+    [ReceptionistController::class, 'show']
+);
+
+Route::patch(
+    '/v1/receptionist/reservations/{reservation}',
+    [ReceptionistController::class, 'update']
+);
+
+Route::post(
+    '/v1/receptionist/reservations/{reservation}/cancel',
+    [ReceptionistController::class, 'cancel']
+);
+
+Route::get(
+    '/v1/receptionist/reservations/{reservation}/payments',
+    [ReceptionistController::class, 'payments']
+);
+
+Route::post(
+    '/v1/receptionist/reservations/{reservation}/payments',
+    [ReceptionistController::class, 'recordPayment']
+);
+
+Route::post(
+    '/v1/receptionist/reservations/{reservation}/check-in',
+    [ReceptionistController::class, 'checkIn']
+);
+
+Route::post(
+    '/v1/receptionist/reservations/{reservation}/check-out',
+    [ReceptionistController::class, 'checkOut']
+);
