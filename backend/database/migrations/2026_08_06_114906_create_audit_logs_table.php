@@ -28,7 +28,6 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->json('metadata')->nullable();
 
-            $table->string('ip_address', 45)->nullable();
 
             $table->timestamps();
 
