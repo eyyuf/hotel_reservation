@@ -4,6 +4,8 @@ A simple multi-hotel reservation system organized around a Laravel API backend a
 
 Current status: skeleton only.
 
+The API blueprint currently registers 59 skeleton-only routes, including invoice endpoints. Payment channel support is planned but not implemented, and models and migrations have not yet been created.
+
 ## Folder structure
 
 ```text

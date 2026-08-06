@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\GuestReservationController;
+use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\ManagerController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\PublicHotelController;
@@ -199,6 +200,16 @@ Route::get(
 );
 
 Route::get(
+    '/v1/manager/invoices',
+    [InvoiceController::class, 'managerIndex']
+);
+
+Route::get(
+    '/v1/manager/invoices/{invoice}',
+    [InvoiceController::class, 'managerShow']
+);
+
+Route::get(
     '/v1/manager/reports',
     [ManagerController::class, 'reports']
 );
@@ -229,6 +240,11 @@ Route::get(
 Route::post(
     '/v1/guest/reservations/{reservation}/cancel',
     [GuestReservationController::class, 'cancel']
+);
+
+Route::get(
+    '/v1/guest/reservations/{reservation}/invoice',
+    [InvoiceController::class, 'guestShow']
 );
 
 // Guest payment routes
@@ -290,6 +306,11 @@ Route::get(
 Route::post(
     '/v1/receptionist/reservations/{reservation}/payments',
     [ReceptionistController::class, 'recordPayment']
+);
+
+Route::get(
+    '/v1/receptionist/reservations/{reservation}/invoice',
+    [InvoiceController::class, 'receptionistShow']
 );
 
 Route::post(
