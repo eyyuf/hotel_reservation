@@ -1,18 +1,21 @@
 <?php
 
 namespace App\Http\Controllers\Api\V1;
-
+use App\Models\Hotel;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 
 class SuperAdminController extends Controller
 {
-    public function hotels(): JsonResponse
-    {
-        return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
-    }
+    public function hotels()
+{
+    $hotels = Hotel::all();
+
+    return response()->json([
+        'message' => 'Hotels retrieved successfully.',
+        'data' => $hotels
+    ]);
+}
 
     public function createHotel(): JsonResponse
     {
