@@ -63,11 +63,11 @@ class AuthController extends Controller
         ], 501);
     }
 
-    public function me(): JsonResponse
+    public function me(request $request): JsonResponse
     {
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'user'=> $request->user(),
+        ], 200);
     }
 
     public function profile(): JsonResponse
