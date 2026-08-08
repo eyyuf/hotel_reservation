@@ -25,17 +25,17 @@ Route::post(
 Route::post(
     '/v1/auth/logout',
     [AuthController::class, 'logout']
-);
+)->middleware('auth:sanctum');
 
 Route::get(
     '/v1/auth/me',
     [AuthController::class, 'me']
-);
+)->middleware('auth:sanctum');
 
 Route::patch(
     '/v1/auth/profile',
     [AuthController::class, 'profile']
-);
+)->middleware('auth:sanctum');
 
 // Public hotel routes
 Route::get(
