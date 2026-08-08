@@ -34,12 +34,45 @@ class ManagerController extends Controller
     ]);
 }
 
-    public function updateHotel(): JsonResponse
-    {
+    public function updateHotel(Request $request): JsonResponse
+{
+    $user = $request->user();
+    $hotel = $user->hotel;
+
+    if (!$hotel) {
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'You are not authorized to perform this action.',
+        ], 403);
     }
+
+    // Validate only allowed fields (hotel_id and status are excluded)
+    $validated = $request->validate([
+        'name'    => 'sometimes|string|max:255',
+        'address' => 'sometimes|string|max:255',
+        'city'    => 'sometimes|string|max:255',
+        'country' => 'sometimes|string|max:255',
+        'phone'   => 'sometimes|string|max:50',
+        'email'   => 'sometimes|email|max:255',
+    ]);
+
+    // Update hotel attributes
+    $hotel->update($validated);
+
+    return response()->json([
+        'message' => 'Hotel information updated successfully.',
+        'data' => [
+            'hotel_id'   => $hotel->id,
+            'name'       => $hotel->name,
+            'address'    => $hotel->address,
+            'city'       => $hotel->city,
+            'country'    => $hotel->country,
+            'phone'      => $hotel->phone,
+            'email'      => $hotel->email,
+            'status'     => $hotel->status,
+            'updated_at' => $hotel->updated_at->toISOString(),
+        ],
+    ], 200);
+}
 
     public function receptionists(): JsonResponse
     {
