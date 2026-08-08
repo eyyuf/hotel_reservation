@@ -17,11 +17,21 @@ class SuperAdminController extends Controller
     ]);
 }
 
-    public function createHotel(): JsonResponse
+    public function createHotel(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'name'=>'string|required|max:255',
+            'email'=>'string|required|max:255',
+            'phone'=>'string|required',
+            'address'=>'string|required',
+            'city'=>'string|required',
+            'country'=>'string|required',
+        ]);
+        $hotel=Hotel::create($validated);
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'Hotel created succesfully',
+            'data' =>$hotel
+        ], 201);
     }
 
     public function hotel(): JsonResponse
