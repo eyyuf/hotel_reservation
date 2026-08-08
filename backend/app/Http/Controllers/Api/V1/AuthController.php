@@ -33,11 +33,27 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function login(): JsonResponse
+    public function login(request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'email'=>['required','email'],
+            'password'=>['required','string']
+        ]);
+            $user = User::where('email', $validated['email'])->first();
+            if(!$user || !Hash::check($validated['password'],$user->password)){
+                return response()->json([
+                    'message' => 'Invalid email or password.',
+                ], 401);
+            };
+            $token = $user->createToken('auth-token')->plainTextToken;
+
+
+
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'Login successful.',
+            'token' => $token,
+            'user' => $user,
+        ], 200);
     }
 
     public function logout(): JsonResponse
