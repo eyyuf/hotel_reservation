@@ -4,15 +4,35 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ManagerController extends Controller
 {
-    public function hotel(): JsonResponse
-    {
+    public function hotel(Request $request): JsonResponse
+{
+    $user = $request->user();
+    $hotel = $user->hotel;
+
+    if (!$hotel) {
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'You are not authorized to perform this action.',
+        ], 403);
     }
+
+    return response()->json([
+        'message' => 'Hotel retrieved successfully.',
+        'data' => [
+            'hotel_id' => $hotel->id,
+            'name' => $hotel->name,
+            'address' => $hotel->address,
+            'city' => $hotel->city,
+            'country' => $hotel->country,
+            'phone' => $hotel->phone,
+            'email' => $hotel->email,
+            'status' => $hotel->status,
+        ],
+    ]);
+}
 
     public function updateHotel(): JsonResponse
     {
