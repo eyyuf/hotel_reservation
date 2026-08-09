@@ -10,7 +10,7 @@ class SuperAdminController extends Controller
 {
     public function hotels()
 {
-    $hotels = Hotel::all();
+    $hotels = Hotel::paginate(10);
 
     return response()->json([
         'message' => 'Hotels retrieved successfully.',
@@ -22,7 +22,7 @@ class SuperAdminController extends Controller
     {
         $validated = $request->validate([
             'name'=>'string|required|max:255',
-            'email'=>'string|required|max:255',
+            'email'=>'string|email|max:255|unique:hotels,email',
             'phone'=>'string|required',
             'address'=>'string|required',
             'city'=>'string|required',
@@ -43,11 +43,23 @@ class SuperAdminController extends Controller
         ]);
     }
 
-    public function updateHotel(): JsonResponse
+    public function updateHotel(Request $request, Hotel $hotel): JsonResponse
     {
+        $validated = $request->validate([
+            'name' => 'sometimes|string',
+            'address' => 'sometimes|string',
+            'city' => 'sometimes|string',
+            'country' => 'sometimes|string',
+            'phone' => 'sometimes|string',
+            'email' => 'sometimes|email',
+        ]);
+
+        $hotel->update($validated);
+
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'Hotel updated successfully.',
+            'data' => $hotel,
+        ]);
     }
 
     public function hotelStatus(): JsonResponse
