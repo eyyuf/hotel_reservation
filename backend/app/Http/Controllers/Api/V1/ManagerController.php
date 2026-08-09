@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -74,12 +75,39 @@ class ManagerController extends Controller
     ], 200);
 }
 
-    public function receptionists(): JsonResponse
-    {
+  public function receptionists(Request $request): JsonResponse
+{
+    $user = $request->user();
+    $hotel = $user->hotel;
+
+    if (!$hotel) {
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'You are not authorized to perform this action.',
+        ], 403);
     }
+
+    // Query users associated with this hotel who have the receptionist role
+    $receptionists = User::where('hotel_id', $hotel->id)
+        ->where('role', 'receptionist')
+        ->get();
+
+    $data = $receptionists->map(function ($receptionist) {
+        return [
+            'receptionist_id' => $receptionist->id,
+            'first_name'      => $receptionist->first_name,
+            'last_name'       => $receptionist->last_name,
+            'email'           => $receptionist->email,
+            'phone'           => $receptionist->phone,
+            'status'          => $receptionist->status,
+            'created_at'      => $receptionist->created_at->toISOString(),
+        ];
+    });
+
+    return response()->json([
+        'message' => 'Receptionists retrieved successfully.',
+        'data'    => $data,
+    ], 200);
+}
 
     public function createReceptionist(): JsonResponse
     {
