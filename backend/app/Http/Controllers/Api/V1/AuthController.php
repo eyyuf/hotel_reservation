@@ -56,11 +56,14 @@ class AuthController extends Controller
         ], 200);
     }
 
-    public function logout(): JsonResponse
+    public function logout(request $request): JsonResponse
     {
+        $request->user()->currentAccessToken()->delete();
+
+
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'Logged out successfully.',
+        ], 200);
     }
 
     public function me(request $request): JsonResponse
