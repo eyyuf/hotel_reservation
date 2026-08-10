@@ -62,11 +62,17 @@ class SuperAdminController extends Controller
         ]);
     }
 
-    public function hotelStatus(): JsonResponse
+    public function hotelStatus(Request $request, Hotel $hotel): JsonResponse
     {
+        $validated = $request->validate([
+            'status'=>'required|in:active,suspended'
+        ]);
+        $hotel->update($validated);
+
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'Hotel status updated successfully.',
+            'data'=>$hotel,
+        ]);
     }
 
     public function managers(): JsonResponse
