@@ -58,7 +58,7 @@ class SuperAdminController extends Controller
 
         return response()->json([
             'message' => 'Hotel updated successfully.',
-            'data' => $hotel,
+            'data' => $hotel
         ]);
     }
 
@@ -75,11 +75,15 @@ class SuperAdminController extends Controller
         ]);
     }
 
-    public function managers(): JsonResponse
+    public function managers(Hotel $hotel): JsonResponse
     {
+        $managers = $hotel->staff()->where('role','hotel_manager')->get();
+
+
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'Hotel managers retrieved successfully.',
+            'data' =>$managers
+        ]);
     }
 
     public function createManager(): JsonResponse
