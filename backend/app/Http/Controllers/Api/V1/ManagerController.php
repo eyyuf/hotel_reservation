@@ -109,19 +109,86 @@ class ManagerController extends Controller
     ], 200);
 }
 
-    public function createReceptionist(): JsonResponse
-    {
+    public function createReceptionist(Request $request): JsonResponse
+{
+    $user = $request->user();
+    $hotel = $user->hotel;
+
+    if (!$hotel) {
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'You are not authorized to perform this action.',
+        ], 403);
     }
 
-    public function receptionist(): JsonResponse
-    {
+    $validated = $request->validate([
+        'first_name' => 'required|string|max:255',
+        'last_name'  => 'required|string|max:255',
+        'email'      => 'required|email|unique:users,email|max:255',
+        'phone'      => 'required|string|max:50',
+        'password'   => 'required|string|min:8',
+    ]);
+
+    $receptionist = User::create([
+        'first_name' => $validated['first_name'],
+        'last_name'  => $validated['last_name'],
+        'email'      => $validated['email'],
+        'phone'      => $validated['phone'],
+        'password'   => bcrypt($validated['password']),
+        'hotel_id'   => $hotel->id,
+        'role'       => 'receptionist',
+        'status'     => 'active',
+    ]);
+
+    return response()->json([
+        'message' => 'Receptionist created successfully.',
+        'data' => [
+            'receptionist_id' => $receptionist->id,
+            'first_name'      => $receptionist->first_name,
+            'last_name'       => $receptionist->last_name,
+            'email'           => $receptionist->email,
+            'phone'           => $receptionist->phone,
+            'status'          => $receptionist->status,
+            'created_at'      => $receptionist->created_at->toISOString(),
+        ],
+    ], 201);
+}
+
+   public function showReceptionist(Request $request, int $id): JsonResponse
+{
+    $user = $request->user();
+    $hotel = $user->hotel;
+
+    if (!$hotel) {
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'You are not authorized to perform this action.',
+        ], 403);
     }
+
+    // Find user belonging to THIS hotel with the receptionist role
+    $receptionist = User::where('id', $id)
+        ->where('hotel_id', $hotel->id)
+        ->where('role', 'receptionist')
+        ->first();
+
+    if (!$receptionist) {
+        return response()->json([
+            'message' => 'Receptionist not found.',
+        ], 404);
+    }
+
+    return response()->json([
+        'message' => 'Receptionist retrieved successfully.',
+        'data' => [
+            'receptionist_id' => $receptionist->id,
+            'first_name'      => $receptionist->first_name,
+            'last_name'       => $receptionist->last_name,
+            'email'           => $receptionist->email,
+            'phone'           => $receptionist->phone,
+            'status'          => $receptionist->status,
+            'created_at'      => $receptionist->created_at->toISOString(),
+        ],
+    ], 200);
+}
 
     public function updateReceptionist(): JsonResponse
     {
