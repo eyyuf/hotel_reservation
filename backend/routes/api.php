@@ -30,7 +30,7 @@ Route::post(
 Route::get(
     '/v1/auth/me',
     [AuthController::class, 'me']
-)->middleware('auth:sanctum');
+)->middleware(['auth:sanctum','active']);
 
 Route::patch(
     '/v1/auth/profile',
