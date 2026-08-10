@@ -102,11 +102,13 @@ class SuperAdminController extends Controller
         ]);
     }
 
-    public function showManager(): JsonResponse
+    public function showManager(Hotel $hotel): JsonResponse
     {
+        $manager = $hotel->staff()->where('role', 'hotel_manager')->firstOrFail();
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'manager showed succesfully',
+            'data' => $manager
+        ]);
     }
 
     public function updateManager(): JsonResponse
