@@ -190,19 +190,94 @@ class ManagerController extends Controller
     ], 200);
 }
 
-    public function updateReceptionist(): JsonResponse
-    {
+   public function updateReceptionist(Request $request, int $id): JsonResponse
+{
+    $user = $request->user();
+    $hotel = $user->hotel;
+
+    if (!$hotel) {
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'You are not authorized to perform this action.',
+        ], 403);
     }
 
-    public function receptionistStatus(): JsonResponse
-    {
+    $receptionist = User::where('id', $id)
+        ->where('hotel_id', $hotel->id)
+        ->where('role', 'receptionist')
+        ->first();
+
+    if (!$receptionist) {
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'Receptionist not found.',
+        ], 404);
     }
+
+    $validated = $request->validate([
+        'first_name' => 'sometimes|required|string|max:255',
+        'last_name'  => 'sometimes|required|string|max:255',
+        'email'      => 'sometimes|required|email|max:255|unique:users,email,' . $receptionist->id,
+        'phone'      => 'sometimes|required|string|max:50',
+    ]);
+
+    $receptionist->update($validated);
+
+    return response()->json([
+        'message' => 'Receptionist updated successfully.',
+        'data' => [
+            'receptionist_id' => $receptionist->id,
+            'first_name'      => $receptionist->first_name,
+            'last_name'       => $receptionist->last_name,
+            'email'           => $receptionist->email,
+            'phone'           => $receptionist->phone,
+            'status'          => $receptionist->status,
+            'created_at'      => $receptionist->created_at->toISOString(),
+        ],
+    ], 200);
+}
+
+public function receptionistStatus(Request $request, int $id): JsonResponse
+{
+    $user = $request->user();
+    $hotel = $user->hotel;
+
+    if (!$hotel) {
+        return response()->json([
+            'message' => 'You are not authorized to perform this action.',
+        ], 403);
+    }
+
+    $receptionist = User::where('id', $id)
+        ->where('hotel_id', $hotel->id)
+        ->where('role', 'receptionist')
+        ->first();
+
+    if (!$receptionist) {
+        return response()->json([
+            'message' => 'Receptionist not found.',
+        ], 404);
+    }
+
+    $validated = $request->validate([
+        'status' => 'required|string|in:active,inactive',
+    ]);
+
+    $receptionist->update([
+        'status' => $validated['status'],
+    ]);
+
+    return response()->json([
+        'message' => 'Receptionist status updated successfully.',
+        'data' => [
+            'receptionist_id' => $receptionist->id,
+            'first_name'      => $receptionist->first_name,
+            'last_name'       => $receptionist->last_name,
+            'email'           => $receptionist->email,
+            'phone'           => $receptionist->phone,
+            'status'          => $receptionist->status,
+            'created_at'      => $receptionist->created_at->toISOString(),
+        ],
+    ], 200);
+}
 
     public function roomTypes(): JsonResponse
     {
