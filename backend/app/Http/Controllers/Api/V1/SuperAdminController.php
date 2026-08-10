@@ -86,11 +86,20 @@ class SuperAdminController extends Controller
         ]);
     }
 
-    public function createManager(): JsonResponse
+    public function createManager(Request $request, Hotel $hotel): JsonResponse
     {
+        $validated = $request->validate([
+            'name' =>'required|string',
+            'email'=>'required|email|unique:users,email',
+
+        ]) ;
+        $manager= $hotel->staff()->create($validated);
+        
+
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'manager created succesfully.',
+            'data'=>$manager
+        ]);
     }
 
     public function showManager(): JsonResponse
