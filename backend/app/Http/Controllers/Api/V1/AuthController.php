@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api\V1;
-
+use Illuminate\Validation\Rule;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use App\Models\User;
@@ -56,24 +56,44 @@ class AuthController extends Controller
         ], 200);
     }
 
-    public function logout(): JsonResponse
+    public function logout(request $request): JsonResponse
     {
+        $request->user()->currentAccessToken()->delete();
+
+
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'Logged out successfully.',
+        ], 200);
     }
 
-    public function me(): JsonResponse
+    public function me(request $request): JsonResponse
     {
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'user'=> $request->user(),
+        ], 200);
     }
 
-    public function profile(): JsonResponse
+    public function profile(Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'first_name' => ['sometimes', 'string', 'max:255'],
+            'last_name' => ['sometimes', 'string', 'max:255'],
+            'email' => [
+                'sometimes',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
+        ]);
+
+        $user->update($validated);
+
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'Profile updated successfully.',
+            'user' => $user,
+        ], 200);
     }
 }
