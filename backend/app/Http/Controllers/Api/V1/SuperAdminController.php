@@ -24,7 +24,7 @@ class SuperAdminController extends Controller
     {
         $validated = $request->validate([
             'name'=>'string|required|max:255',
-            'email'=>'string|email|max:255|unique:hotels,email',
+            'email'=>'string|required|email|max:255|unique:hotels,email',
             'phone'=>'string|required',
             'address'=>'string|required',
             'city'=>'string|required',
@@ -161,17 +161,46 @@ class SuperAdminController extends Controller
         ]);
     }
 
-    public function reports(): JsonResponse
+    public function reports(Hotel $hotel): JsonResponse
     {
+        $totalRooms = $hotel->rooms()->count();
+        $occupiedRooms = $hotel->rooms()->where('status', 'occupied')->count();
+        $occupancyRate = $totalRooms > 0 ? round(($occupiedRooms / $totalRooms) * 100, 2) : 0;
+
+        
+        $totalReservations = $hotel->reservations()->count();
+        $totalRevenue = $hotel->payments()->where('status', 'completed')->sum('amount');
+        
+        $completedReservations = $hotel->reservations()->where('status', 'completed')->count();
+        $cancelledReservations = $hotel->reservations()->where('status', 'cancelled')->count();
+        $staffByRole = $hotel->staff->groupBy('role')->map->count();
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'Hotel report generated succesfully.',
+            'data' => [
+                'hotel_id'   => $hotel->id,
+                'hotel_name' => $hotel->name,
+
+                'financials' => [
+                    'total_revenue' => (float) $totalRevenue,
+                    'currency'      => 'USD',
+                ],
+
+                'occupancy' => [
+                    'total_rooms'    => $totalRooms,
+                    'occupied_rooms' => $occupiedRooms,
+                    'occupancy_rate' => $occupancyRate . '%',
+                ],
+
+                'reservations' => [
+                    'total_reservations' => $totalReservations,
+                ],
+
+                'staffing' => [
+                    'total_staff' => $hotel->staff->count(),
+                    'by_role'     => $staffByRole, // <-- The key-value counts we calculated earlier!
+                ],
+            ]
+        ]);
     }
 
-    public function auditLogs(): JsonResponse
-    {
-        return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
-    }
 }
