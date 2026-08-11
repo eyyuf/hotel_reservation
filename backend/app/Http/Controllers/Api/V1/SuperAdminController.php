@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api\V1;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Models\Hotel;
@@ -52,7 +53,7 @@ class SuperAdminController extends Controller
             'city' => 'sometimes|string',
             'country' => 'sometimes|string',
             'phone' => 'sometimes|string',
-            'email' => 'sometimes|email',
+            'email' => 'sometimes|email|unique:hotels,email,'. $hotel->id
         ]);
 
         $hotel->update($validated);
@@ -86,47 +87,55 @@ class SuperAdminController extends Controller
             'data' =>$managers
         ]);
     }
-
     public function createManager(Request $request, Hotel $hotel): JsonResponse
     {
         $validated = $request->validate([
-                'name'     => 'required|string|max:255',
-                'email'    => 'required|email|unique:users,email',
-                'password' => 'required|string|min:8', 
-            ]);
+            'first_name' => 'required|string|max:255',
+            'last_name'  => 'required|string|max:255',
+            'email'      => 'required|email|unique:users,email',
+            'phone'      => 'nullable|string|max:20',    // Fixed: removed 'required'
+            'password'   => 'required|string|min:8',     // Fixed: added missing validation
+        ]);
 
-           
         $manager = $hotel->staff()->create([
-                'name'     => $validated['name'],
-                'email'    => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'role'     => 'hotel_manager',
-                'status'   => 'active',
-            ]);
+            'first_name'         => $validated['first_name'],
+            'last_name'          => $validated['last_name'],
+            'email'              => $validated['email'],
+            'phone'              => $validated['phone'] ?? null,
+            'password'           => $validated['password'], // Fixed: no Hash::make (User model $casts handles it)
+            'role'               => 'hotel_manager',
+            'status'             => 'active',
+            'created_by_user_id' => $request->user()?->id,
+        ]);
+
         return response()->json([
             'message' => 'Manager created successfully.',
             'data'    => $manager,
         ], 201);
-
     }
 
-    public function showManager(Hotel $hotel): JsonResponse
+    public function showManager(Hotel $hotel, User $manager): JsonResponse
     {
-        $manager = $hotel->staff()->where('role', 'hotel_manager')->firstOrFail();
+        if ($manager->hotel_id !== $hotel->id || $manager->role !== 'hotel_manager') {
+           abort(404, 'Manager not found for this hotel.');
+        }
         return response()->json([
             'message' => 'manager showed succesfully',
             'data' => $manager
         ]);
     }
 
-    public function updateManager(Request $request, Hotel $hotel): JsonResponse
+    public function updateManager(Request $request, Hotel $hotel, User $manager): JsonResponse
     {
-        $manager = $hotel->staff()->where('role','hotel_manager')->firstOrFail();
+        if ($manager->hotel_id !== $hotel->id || $manager->role !== 'hotel_manager') {
+           abort(404, 'Manager not found for this hotel.');
+        }
         $validated = $request->validate([
-            'name'=>'sometimes|string',
-            'email'=>'sometimes|email|unique:user,email,'. $manager->id,
-            
-        ]);
+                'first_name' => 'sometimes|string|max:255',
+                'last_name'  => 'sometimes|string|max:255',
+                'email'      => 'sometimes|email|unique:users,email,' . $manager->id,
+                'phone'      => 'sometimes|nullable|string|max:20',
+            ]);
         $manager ->update($validated);
         
         return response()->json([
@@ -136,10 +145,11 @@ class SuperAdminController extends Controller
         ]);
     }
 
-    public function managerStatus(Request $request, Hotel $hotel): JsonResponse
+    public function managerStatus(Request $request, Hotel $hotel, User $manager): JsonResponse
     {
-        $manager = $hotel->staff()->where('role','hotel_manager')->firstOrFail();
-
+        if ($manager->hotel_id !== $hotel->id || $manager->role !== 'hotel_manager') {
+           abort(404, 'Manager not found for this hotel.');
+        }
         $validated= $request->validate([
             'status'=>'required|in:active,suspended',
         ]);
