@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api\V1;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Models\Hotel;
 use App\Http\Controllers\Controller;
@@ -89,17 +90,24 @@ class SuperAdminController extends Controller
     public function createManager(Request $request, Hotel $hotel): JsonResponse
     {
         $validated = $request->validate([
-            'name' =>'required|string',
-            'email'=>'required|email|unique:users,email',
+                'name'     => 'required|string|max:255',
+                'email'    => 'required|email|unique:users,email',
+                'password' => 'required|string|min:8', 
+            ]);
 
-        ]) ;
-        $manager= $hotel->staff()->create($validated);
-        
-
+           
+        $manager = $hotel->staff()->create([
+                'name'     => $validated['name'],
+                'email'    => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role'     => 'hotel_manager',
+                'status'   => 'active',
+            ]);
         return response()->json([
-            'message' => 'manager created succesfully.',
-            'data'=>$manager
-        ]);
+            'message' => 'Manager created successfully.',
+            'data'    => $manager,
+        ], 201);
+
     }
 
     public function showManager(Hotel $hotel): JsonResponse
@@ -117,6 +125,7 @@ class SuperAdminController extends Controller
         $validated = $request->validate([
             'name'=>'sometimes|string',
             'email'=>'sometimes|email|unique:user,email,'. $manager->id,
+            
         ]);
         $manager ->update($validated);
         
