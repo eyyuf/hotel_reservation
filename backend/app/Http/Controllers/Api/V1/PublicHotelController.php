@@ -19,11 +19,18 @@ class PublicHotelController extends Controller
         ], 200);
     }
 
-    public function show(): JsonResponse
+    public function show(Hotel $hotel): JsonResponse
     {
+        if($hotel->status !== 'active'){
+            abort(404);
+        }; 
+
+
+
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'Hotel retrived successfuly',
+            'data' => $hotel
+        ], 200);
     }
 
     public function roomTypes(): JsonResponse
