@@ -29,14 +29,24 @@ class PublicHotelController extends Controller
 
         return response()->json([
             'message' => 'Hotel retrived successfuly',
-            'data' => $hotel
+            'data' => $hotel,
         ], 200);
     }
 
-    public function roomTypes(): JsonResponse
+    public function roomTypes(Hotel $hotel): JsonResponse
     {
+        if($hotel->status !== 'active'){
+            abort(404);
+        };
+        
+        $roomTypes = $hotel->roomTypes()->where('status','active')->paginate(10);
+
+
+
+
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
+            'message' => 'Room Types retrived successfuly.',
+            'data'=>$roomTypes,
         ], 501);
     }
 
