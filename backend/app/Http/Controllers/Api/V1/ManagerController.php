@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\RoomType;
 use App\Models\Reservation;
 use App\Models\Payment;
-use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -515,66 +515,4 @@ class ManagerController extends Controller
         ], 200);
     }
 
-    public function reports(Request $request): JsonResponse
-    {
-        $user = $request->user();
-        $hotel = $user->hotel;
-
-        if (!$hotel) {
-            return response()->json([
-                'message' => 'You are not authorized to perform this action.',
-            ], 403);
-        }
-
-        $totalRevenue = Payment::where('hotel_id', $hotel->id)
-            ->where('status', 'completed')
-            ->sum('amount');
-
-        $totalReservations = Reservation::where('hotel_id', $hotel->id)->count();
-        $activeReceptionists = User::where('hotel_id', $hotel->id)
-            ->where('role', 'receptionist')
-            ->where('status', 'active')
-            ->count();
-
-        return response()->json([
-            'message' => 'Manager report generated successfully.',
-            'data' => [
-                'total_revenue'        => (float) $totalRevenue,
-                'total_reservations'   => $totalReservations,
-                'active_receptionists' => $activeReceptionists,
-                'generated_at'         => now()->toISOString(),
-            ],
-        ], 200);
-    }
-
-    public function auditLogs(Request $request): JsonResponse
-    {
-        $user = $request->user();
-        $hotel = $user->hotel;
-
-        if (!$hotel) {
-            return response()->json([
-                'message' => 'You are not authorized to perform this action.',
-            ], 403);
-        }
-
-        $logs = AuditLog::where('hotel_id', $hotel->id)
-            ->latest()
-            ->get();
-
-        $data = $logs->map(function ($log) {
-            return [
-                'log_id'      => $log->id,
-                'user_id'     => $log->user_id,
-                'action'      => $log->action,
-                'description' => $log->description,
-                'created_at'  => $log->created_at->toISOString(),
-            ];
-        });
-
-        return response()->json([
-            'message' => 'Audit logs retrieved successfully.',
-            'data'    => $data,
-        ], 200);
-    }
 }
