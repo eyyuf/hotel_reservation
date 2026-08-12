@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use App\Models\Hotel;
+use App\Models\RoomType;
 
 class PublicHotelController extends Controller
 {
@@ -47,14 +48,23 @@ class PublicHotelController extends Controller
         return response()->json([
             'message' => 'Room Types retrived successfuly.',
             'data'=>$roomTypes,
-        ], 501);
+        ], 200);
     }
 
-    public function roomType(): JsonResponse
+    public function roomType(Hotel $hotel ,RoomType $roomType): JsonResponse
     {
+        if($hotel->status !== 'active'){
+            abort(404);
+        };
+        if($roomType->hotel_id !== $hotel->id || $roomType->status !== 'active'){
+            abort(404);
+        };
+
+
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'Room type retrived successfuly.',
+            'data'=> $roomType,
+        ], 200);
     }
 
     public function availability(): JsonResponse
