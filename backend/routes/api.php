@@ -515,4 +515,4 @@ Route::post(
     'auth:sanctum',
     'active',
     'role:receptionist',
-]);
+]); 
