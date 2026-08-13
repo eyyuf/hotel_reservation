@@ -200,6 +200,11 @@ Route::get(
 );
 
 Route::get(
+    '/v1/manager/reports', 
+    [ManagerController::class, 'reports']
+);
+
+Route::get(
     '/v1/manager/invoices',
     [InvoiceController::class, 'managerIndex']
 );
@@ -208,6 +213,7 @@ Route::get(
     '/v1/manager/invoices/{invoice}',
     [InvoiceController::class, 'managerShow']
 );
+
 
 
 // Guest reservation routes

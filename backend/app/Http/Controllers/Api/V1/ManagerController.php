@@ -515,4 +515,29 @@ class ManagerController extends Controller
         ], 200);
     }
 
+    public function reports(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $hotel = $user->hotel;
+
+        if (!$hotel) {
+            return response()->json([
+                'message' => 'You are not authorized to perform this action.',
+            ], 403);
+        }
+
+        $totalReservations = Reservation::where('hotel_id', $hotel->id)->count();
+        $totalRevenue = Payment::where('hotel_id', $hotel->id)->where('status', 'completed')->sum('amount');
+        $activeReceptionists = User::where('hotel_id', $hotel->id)->where('role', 'receptionist')->where('status', 'active')->count();
+
+        return response()->json([
+            'message' => 'Reports summary retrieved successfully.',
+            'data' => [
+                'total_reservations'   => $totalReservations,
+                'total_revenue'        => (float) $totalRevenue,
+                'active_receptionists' => $activeReceptionists,
+            ],
+        ], 200);
+    }
+
 }
