@@ -37,34 +37,36 @@ class SuperAdminController extends Controller
     }
 
     public function createHotel(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'name'    => 'required|string|max:255',
-            'email'   => 'required|email|max:255|unique:hotels,email',
-            'phone'   => 'required|string|max:20',
-            'address' => 'required|string|max:255',
-            'city'    => 'required|string|max:255',
-            'country' => 'required|string|max:255',
-        ]);
+{
+    $validated = $request->validate([
+        'name'    => 'required|string|max:255',
+        'email'   => 'required|email|max:255|unique:hotels,email',
+        'phone'   => 'required|string|max:20',
+        'address' => 'required|string|max:255',
+        'city'    => 'required|string|max:255',
+        'country' => 'required|string|max:255',
+    ]);
 
-        $hotel = Hotel::create($validated);
+    $hotel = Hotel::create($validated);
 
-        return response()->json([
-            'message' => 'Hotel created successfully.',
-            'data'    => [
-                'hotel_id'   => $hotel->id,
-                'name'       => $hotel->name,
-                'address'    => $hotel->address,
-                'city'       => $hotel->city,
-                'country'    => $hotel->country,
-                'phone'      => $hotel->phone,
-                'email'      => $hotel->email,
-                'status'     => $hotel->status,
-                'created_at' => $hotel->created_at,
-                'updated_at' => $hotel->updated_at,
-            ],
-        ], 201);
-    }
+    $hotel->refresh();
+
+    return response()->json([
+        'message' => 'Hotel created successfully.',
+        'data'    => [
+            'hotel_id'   => $hotel->id,
+            'name'       => $hotel->name,
+            'address'    => $hotel->address,
+            'city'       => $hotel->city,
+            'country'    => $hotel->country,
+            'phone'      => $hotel->phone,
+            'email'      => $hotel->email,
+            'status'     => $hotel->status,
+            'created_at' => $hotel->created_at,
+            'updated_at' => $hotel->updated_at,
+        ],
+    ], 201);
+}
 
     public function hotel(Hotel $hotel): JsonResponse
     {
@@ -120,7 +122,8 @@ class SuperAdminController extends Controller
             'status' => 'required|in:active,suspended',
         ]);
 
-        $hotel->update($validated);
+        $hotel->status = $validated['status'];
+        $hotel->save();
 
         return response()->json([
             'message' => 'Hotel status updated successfully.',
