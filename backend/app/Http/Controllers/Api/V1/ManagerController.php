@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\AuditLog;
 use App\Models\Hotel;
+use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Reservation;
 use App\Models\RoomType;
@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class ManagerController extends Controller
 {
@@ -71,7 +72,7 @@ class ManagerController extends Controller
             'city'    => 'sometimes|string|max:255',
             'country' => 'sometimes|string|max:255',
             'phone'   => 'sometimes|string|max:50',
-            'email'   => 'sometimes|email|max:255',
+            'email'   => ['sometimes', 'email', 'max:255', Rule::unique('hotels', 'email')->ignore($hotel->id)],
         ]);
 
         $hotel->update($validated);
@@ -114,7 +115,7 @@ class ManagerController extends Controller
                 'email'              => $item->email,
                 'phone'              => $item->phone,
                 'role'               => $item->role,
-                'account_status'     => $item->account_status ?? $item->status,
+                'account_status'     => $item->status,
             ])
         ]);
     }
@@ -132,17 +133,17 @@ class ManagerController extends Controller
             'phone'      => 'nullable|string|max:50',
         ]);
 
-        $receptionist = User::create([
-            'hotel_id'           => $hotel->id,
-            'created_by_user_id' => $request->user()->id,
-            'first_name'         => $validated['first_name'],
-            'last_name'          => $validated['last_name'],
-            'email'              => $validated['email'],
-            'password'           => Hash::make($validated['password']),
-            'phone'              => $validated['phone'] ?? null,
-            'role'               => 'receptionist',
-            'account_status'     => 'active',
-        ]);
+        $receptionist = new User();
+        $receptionist->first_name         = $validated['first_name'];
+        $receptionist->last_name          = $validated['last_name'];
+        $receptionist->email              = $validated['email'];
+        $receptionist->password           = Hash::make($validated['password']);
+        $receptionist->phone              = $validated['phone'] ?? null;
+        $receptionist->hotel_id           = $hotel->id;
+        $receptionist->role               = 'receptionist';
+        $receptionist->status             = 'active';
+        $receptionist->created_by_user_id = $request->user()->id;
+        $receptionist->save();
 
         return response()->json([
             'message' => 'Receptionist created successfully.',
@@ -155,7 +156,7 @@ class ManagerController extends Controller
                 'email'              => $receptionist->email,
                 'phone'              => $receptionist->phone,
                 'role'               => $receptionist->role,
-                'account_status'     => $receptionist->account_status,
+                'account_status'     => $receptionist->status,
                 'created_at'         => $receptionist->created_at->toISOString(),
                 'updated_at'         => $receptionist->updated_at->toISOString(),
             ]
@@ -185,7 +186,7 @@ class ManagerController extends Controller
                 'email'              => $receptionist->email,
                 'phone'              => $receptionist->phone,
                 'role'               => $receptionist->role,
-                'account_status'     => $receptionist->account_status ?? $receptionist->status,
+                'account_status'     => $receptionist->status,
             ]
         ]);
     }
@@ -221,7 +222,7 @@ class ManagerController extends Controller
                 'email'          => $receptionist->email,
                 'phone'          => $receptionist->phone,
                 'role'           => $receptionist->role,
-                'account_status' => $receptionist->account_status ?? $receptionist->status,
+                'account_status' => $receptionist->status,
                 'updated_at'     => $receptionist->updated_at->toISOString(),
             ]
         ]);
@@ -243,7 +244,8 @@ class ManagerController extends Controller
             'account_status' => 'required|string|in:active,suspended,inactive',
         ]);
 
-        $receptionist->update(['account_status' => $validated['account_status']]);
+        $receptionist->status = $validated['account_status'];
+        $receptionist->save();
 
         return response()->json([
             'message' => 'Receptionist status updated successfully.',
@@ -251,7 +253,7 @@ class ManagerController extends Controller
                 'user_id'        => $receptionist->id,
                 'hotel_id'       => $receptionist->hotel_id,
                 'role'           => $receptionist->role,
-                'account_status' => $receptionist->account_status,
+                'account_status' => $receptionist->status,
                 'updated_at'     => $receptionist->updated_at->toISOString(),
             ]
         ]);
@@ -338,7 +340,7 @@ class ManagerController extends Controller
                 'description'  => $roomType->description,
                 'base_price'   => number_format((float) $roomType->base_price, 2, '.', ''),
                 'capacity'     => (int) $roomType->capacity,
-                'total_rooms'  => (int) ($roomType->total_rooms ?? 0),
+                'total_rooms'  => (int) ($item->total_rooms ?? 0),
                 'status'       => $roomType->status,
             ]
         ]);
@@ -411,7 +413,7 @@ class ManagerController extends Controller
         $hotel = $this->checkHotelAuth($request);
         if (!$hotel) return $this->forbiddenResponse();
 
-        $reservations = Reservation::with(['roomType', 'guest'])
+        $reservations = Reservation::with(['roomType', 'guest', 'invoice.payments'])
             ->where('hotel_id', $hotel->id)
             ->get();
 
@@ -439,8 +441,8 @@ class ManagerController extends Controller
                 'check_out_date'     => $item->check_out_date,
                 'number_of_rooms'    => (int) ($item->number_of_rooms ?? 1),
                 'total_amount'       => number_format((float) $item->total_amount, 2, '.', ''),
-                'reservation_status' => $item->reservation_status ?? $item->status,
-                'payment_status'     => $item->payment_status,
+                'reservation_status' => $item->status,
+                'payment_status'     => $item->invoice->status ?? null,
             ])
         ]);
     }
@@ -450,19 +452,19 @@ class ManagerController extends Controller
         $hotel = $this->checkHotelAuth($request);
         if (!$hotel) return $this->forbiddenResponse();
 
-        $payments = Payment::whereHas('reservation', function ($query) use ($hotel) {
+        $payments = Payment::whereHas('invoice.reservation', function ($query) use ($hotel) {
             $query->where('hotel_id', $hotel->id);
-        })->get();
+        })->with('invoice.reservation')->get();
 
         return response()->json([
             'message' => 'Hotel payments retrieved successfully.',
             'data' => $payments->map(fn($item) => [
                 'payment_id'            => $item->id,
-                'reservation_id'        => $item->reservation_id,
-                'booking_reference'     => $item->reservation->booking_reference ?? null,
+                'reservation_id'        => $item->invoice->reservation->id ?? null,
+                'booking_reference'     => $item->invoice->reservation->booking_reference ?? null,
                 'amount'                => number_format((float) $item->amount, 2, '.', ''),
                 'payment_method'        => $item->payment_method ?? $item->method,
-                'payment_status'        => $item->payment_status ?? $item->status,
+                'payment_status'        => $item->status,
                 'transaction_reference' => $item->transaction_reference,
                 'paid_at'               => $item->paid_at ? $item->paid_at->toISOString() : null,
             ])
@@ -481,45 +483,14 @@ class ManagerController extends Controller
                 'hotel_name'                => $hotel->name,
                 'total_room_types'          => RoomType::where('hotel_id', $hotel->id)->count(),
                 'total_room_inventory'      => (int) RoomType::where('hotel_id', $hotel->id)->sum('total_rooms'),
-                'available_rooms_today'     => 11, // Replace with dynamic room calculation logic if implemented
                 'total_reservations'        => Reservation::where('hotel_id', $hotel->id)->count(),
-                'pending_reservations'      => Reservation::where('hotel_id', $hotel->id)->where('reservation_status', 'pending')->count(),
-                'confirmed_reservations'    => Reservation::where('hotel_id', $hotel->id)->where('reservation_status', 'confirmed')->count(),
-                'checked_in_reservations'   => Reservation::where('hotel_id', $hotel->id)->where('reservation_status', 'checked_in')->count(),
-                'checked_out_reservations'  => Reservation::where('hotel_id', $hotel->id)->where('reservation_status', 'checked_out')->count(),
-                'total_successful_payments' => Payment::whereHas('reservation', fn($q) => $q->where('hotel_id', $hotel->id))->where('payment_status', 'successful')->count(),
-                'total_revenue'             => number_format((float) Payment::whereHas('reservation', fn($q) => $q->where('hotel_id', $hotel->id))->where('payment_status', 'successful')->sum('amount'), 2, '.', ''),
+                'pending_reservations'      => Reservation::where('hotel_id', $hotel->id)->where('status', 'pending')->count(),
+                'confirmed_reservations'    => Reservation::where('hotel_id', $hotel->id)->where('status', 'confirmed')->count(),
+                'checked_in_reservations'   => Reservation::where('hotel_id', $hotel->id)->where('status', 'checked_in')->count(),
+                'checked_out_reservations'  => Reservation::where('hotel_id', $hotel->id)->where('status', 'checked_out')->count(),
+                'total_successful_payments' => Payment::whereHas('invoice.reservation', fn($q) => $q->where('hotel_id', $hotel->id))->where('status', 'successful')->count(),
+                'total_revenue'             => number_format((float) Payment::whereHas('invoice.reservation', fn($q) => $q->where('hotel_id', $hotel->id))->where('status', 'successful')->sum('amount'), 2, '.', ''),
             ]
-        ]);
-    }
-
-    public function auditLogs(Request $request): JsonResponse
-    {
-        $hotel = $this->checkHotelAuth($request);
-        if (!$hotel) return $this->forbiddenResponse();
-
-        $logs = AuditLog::with('user')
-            ->where('hotel_id', $hotel->id)
-            ->latest()
-            ->get();
-
-        return response()->json([
-            'message' => 'Hotel audit logs retrieved successfully.',
-            'data' => $logs->map(fn($item) => [
-                'audit_log_id' => $item->id,
-                'hotel_id'     => $item->hotel_id,
-                'user' => [
-                    'user_id'    => $item->user->id ?? null,
-                    'first_name' => $item->user->first_name ?? null,
-                    'last_name'  => $item->user->last_name ?? null,
-                    'role'       => $item->user->role ?? null,
-                ],
-                'action'      => $item->action,
-                'entity_type' => $item->entity_type,
-                'entity_id'   => $item->entity_id,
-                'description' => $item->description,
-                'created_at'  => $item->created_at->toISOString(),
-            ])
         ]);
     }
 }

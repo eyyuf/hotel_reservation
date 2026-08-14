@@ -333,14 +333,7 @@ Route::get(
     'role:hotel_manager',
 ]);
 
-Route::get(
-    '/v1/manager/audit-logs',
-    [ManagerController::class, 'auditLogs']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
+
 
 // Guest reservation routes
 Route::get(
