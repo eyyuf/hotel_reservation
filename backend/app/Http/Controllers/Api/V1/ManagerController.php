@@ -162,7 +162,7 @@ class ManagerController extends Controller
         ], 201);
     }
 
-    public function showReceptionist(Request $request, $id): JsonResponse
+    public function receptionist(Request $request, $id): JsonResponse
     {
         $hotel = $this->checkHotelAuth($request);
         if (!$hotel) return $this->forbiddenResponse();
@@ -227,7 +227,7 @@ class ManagerController extends Controller
         ]);
     }
 
-    public function updateReceptionistStatus(Request $request, $id): JsonResponse
+    public function receptionistStatus(Request $request, $id): JsonResponse
     {
         $hotel = $this->checkHotelAuth($request);
         if (!$hotel) return $this->forbiddenResponse();
@@ -322,7 +322,7 @@ class ManagerController extends Controller
         ], 201);
     }
 
-    public function showRoomType(Request $request, $id): JsonResponse
+    public function roomType(Request $request, $id): JsonResponse
     {
         $hotel = $this->checkHotelAuth($request);
         if (!$hotel) return $this->forbiddenResponse();
@@ -339,7 +339,7 @@ class ManagerController extends Controller
                 'description'  => $roomType->description,
                 'base_price'   => number_format((float) $roomType->base_price, 2, '.', ''),
                 'capacity'     => (int) $roomType->capacity,
-                'total_rooms'  => (int) ($item->total_rooms ?? 0),
+                'total_rooms'  => (int) ($roomType->total_rooms ?? 0),
                 'status'       => $roomType->status,
             ]
         ]);
@@ -379,7 +379,7 @@ class ManagerController extends Controller
         ]);
     }
 
-    public function updateRoomTypeStatus(Request $request, $id): JsonResponse
+    public function roomTypeStatus(Request $request, $id): JsonResponse
     {
         $hotel = $this->checkHotelAuth($request);
         if (!$hotel) return $this->forbiddenResponse();

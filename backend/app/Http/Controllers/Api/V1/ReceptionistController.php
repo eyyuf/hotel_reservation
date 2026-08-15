@@ -8,10 +8,11 @@ use App\Models\RoomType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ReservationController extends Controller
 {
-    public function index(Request $request): JsonResponse
+   public function index(Request $request): JsonResponse
     {
         $user = $request->user();
 
@@ -20,6 +21,10 @@ class ReservationController extends Controller
                 ->with(['hotel', 'roomType'])
                 ->get();
         } else {
+            if (!$user->hotel_id) {
+                return response()->json(['message' => 'Unauthorized hotel context.'], 403);
+            }
+
             $reservations = Reservation::where('hotel_id', $user->hotel_id)
                 ->with(['guest', 'roomType'])
                 ->get();
@@ -35,7 +40,12 @@ class ReservationController extends Controller
     {
         $validated = $request->validate([
             'hotel_id'         => 'required|exists:hotels,id',
-            'room_type_id'     => 'required|exists:room_types,id',
+            'room_type_id'     => [
+                'required',
+                Rule::exists('room_types', 'id')->where(function ($query) use ($request) {
+                    return $query->where('hotel_id', $request->hotel_id);
+                }),
+            ],
             'check_in_date'    => 'required|date|after_or_equal:today',
             'check_out_date'   => 'required|date|after:check_in_date',
             'number_of_rooms'  => 'sometimes|integer|min:1',
@@ -80,21 +90,21 @@ class ReservationController extends Controller
     public function show(Request $request, $id): JsonResponse
     {
         $user = $request->user();
-
         $query = Reservation::query()->where('id', $id);
 
         if ($user->role === 'guest') {
             $query->where('guest_user_id', $user->id);
         } else {
+            if (!$user->hotel_id) {
+                return response()->json(['message' => 'Unauthorized hotel context.'], 403);
+            }
             $query->where('hotel_id', $user->hotel_id);
         }
 
         $reservation = $query->with(['hotel', 'roomType', 'invoice'])->first();
 
         if (!$reservation) {
-            return response()->json([
-                'message' => 'Reservation not found.'
-            ], 404);
+            return response()->json(['message' => 'Reservation not found.'], 404);
         }
 
         return response()->json([
@@ -107,21 +117,26 @@ class ReservationController extends Controller
     {
         $user = $request->user();
 
-        $reservation = Reservation::where('id', $id)
-            ->where('hotel_id', $user->hotel_id)
-            ->first();
+        if ($user->role === 'guest') {
+            $reservation = Reservation::where('id', $id)->where('guest_user_id', $user->id)->first();
+        } else {
+            if (!$user->hotel_id) {
+                return response()->json(['message' => 'Unauthorized hotel context.'], 403);
+            }
+            $reservation = Reservation::where('id', $id)->where('hotel_id', $user->hotel_id)->first();
+        }
 
         if (!$reservation) {
-            return response()->json([
-                'message' => 'Reservation not found.'
-            ], 404);
+            return response()->json(['message' => 'Reservation not found.'], 404);
         }
+
+        $checkInDate = $request->input('check_in_date', $reservation->check_in_date);
 
         $validated = $request->validate([
             'status'           => 'sometimes|string|max:30',
             'room_type_id'     => 'sometimes|exists:room_types,id',
             'check_in_date'    => 'sometimes|date',
-            'check_out_date'   => 'sometimes|date|after:check_in_date',
+            'check_out_date'   => 'sometimes|date|after:' . $checkInDate,
             'number_of_rooms'  => 'sometimes|integer|min:1',
             'special_requests' => 'nullable|string',
         ]);
@@ -137,27 +152,25 @@ class ReservationController extends Controller
     public function cancel(Request $request, $id): JsonResponse
     {
         $user = $request->user();
-
         $query = Reservation::where('id', $id);
 
         if ($user->role === 'guest') {
             $query->where('guest_user_id', $user->id);
         } else {
+            if (!$user->hotel_id) {
+                return response()->json(['message' => 'Unauthorized hotel context.'], 403);
+            }
             $query->where('hotel_id', $user->hotel_id);
         }
 
         $reservation = $query->first();
 
         if (!$reservation) {
-            return response()->json([
-                'message' => 'Reservation not found.'
-            ], 404);
+            return response()->json(['message' => 'Reservation not found.'], 404);
         }
 
         if ($reservation->status === 'cancelled') {
-            return response()->json([
-                'message' => 'Reservation is already cancelled.'
-            ], 400);
+            return response()->json(['message' => 'Reservation is already cancelled.'], 400);
         }
 
         $validated = $request->validate([
