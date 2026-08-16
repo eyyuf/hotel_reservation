@@ -282,13 +282,20 @@ class ManagerController extends Controller
         ]);
     }
 
-    public function createRoomType(Request $request): JsonResponse
+   public function createRoomType(Request $request): JsonResponse
     {
         $hotel = $this->checkHotelAuth($request);
         if (!$hotel) return $this->forbiddenResponse();
 
         $validated = $request->validate([
-            'name'        => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('room_types', 'name')->where(function ($query) use ($hotel) {
+                    return $query->where('hotel_id', $hotel->id);
+                }),
+            ],
             'description' => 'nullable|string',
             'base_price'  => 'required|numeric|min:0',
             'capacity'    => 'required|integer|min:1',
@@ -354,7 +361,16 @@ class ManagerController extends Controller
         if (!$roomType) return $this->notFoundResponse();
 
         $validated = $request->validate([
-            'name'        => 'sometimes|string|max:255',
+            'name' => [
+                'sometimes',
+                'string',
+                'max:255',
+                Rule::unique('room_types', 'name')
+                    ->where(function ($query) use ($hotel) {
+                        return $query->where('hotel_id', $hotel->id);
+                    })
+                    ->ignore($id),
+            ],
             'description' => 'nullable|string',
             'base_price'  => 'sometimes|numeric|min:0',
             'capacity'    => 'sometimes|integer|min:1',
