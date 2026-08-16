@@ -72,11 +72,30 @@ class GuestReservationController extends Controller
         ], 201);
     }
 
-    public function show(): JsonResponse
+    public function show(Request $request, Reservation $reservation): JsonResponse
     {
+        if ($reservation->guest_user_id !== $request->user()->id) {
+            return response()->json([
+                'message' => 'Record not found.',
+            ], 404);
+        }
+
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'Reservation details retrieved successfully.',
+            'data'    => [
+                'reservation_id'     => $reservation->id,
+                'hotel_id'           => $reservation->hotel_id,
+                'room_id'            => $reservation->room_id,
+                'guest_user_id'      => $reservation->guest_user_id,
+                'created_by_user_id' => $reservation->created_by_user_id,
+                'check_in'           => $reservation->check_in_date ?? $reservation->check_in,
+                'check_out'          => $reservation->check_out_date ?? $reservation->check_out,
+                'status'             => $reservation->status,
+                'special_notes'      => $reservation->special_notes,
+                'created_at'         => $reservation->created_at,
+                'updated_at'         => $reservation->updated_at,
+            ],
+        ]);
     }
 
     public function cancel(): JsonResponse
