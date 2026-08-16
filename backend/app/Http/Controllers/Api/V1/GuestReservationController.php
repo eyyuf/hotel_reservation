@@ -98,10 +98,31 @@ class GuestReservationController extends Controller
         ]);
     }
 
-    public function cancel(): JsonResponse
+    public function cancel(Request $request, Reservation $reservation): JsonResponse
     {
+        if ($reservation->guest_user_id !== $request->user()->id) {
+            return response()->json([
+                'message' => 'Record not found.',
+            ], 404);
+        }
+
+        if (in_array($reservation->status, ['cancelled', 'completed'])) {
+            return response()->json([
+                'message' => 'Reservation cannot be cancelled in its current state.',
+            ], 422);
+        }
+
+        $reservation->update([
+            'status' => 'cancelled',
+        ]);
+
         return response()->json([
-            'message' => 'Endpoint skeleton only. Implementation pending.',
-        ], 501);
+            'message' => 'Reservation cancelled successfully.',
+            'data'    => [
+                'reservation_id' => $reservation->id,
+                'status'         => $reservation->status,
+                'updated_at'     => $reservation->updated_at,
+            ],
+        ]);
     }
 }
