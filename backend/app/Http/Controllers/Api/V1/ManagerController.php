@@ -302,15 +302,17 @@ class ManagerController extends Controller
             'total_rooms' => 'required|integer|min:0',
         ]);
 
-        $roomType = RoomType::create([
-            'hotel_id'    => $hotel->id,
-            'name'        => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'base_price'  => $validated['base_price'],
-            'capacity'    => $validated['capacity'],
-            'total_rooms' => $validated['total_rooms'],
-            'status'      => 'active',
-        ]);
+        $roomType = new RoomType();
+
+        $roomType->hotel_id = $hotel->id;
+        $roomType->name = $validated['name'];
+        $roomType->description = $validated['description'] ?? null;
+        $roomType->base_price = $validated['base_price'];
+        $roomType->capacity = $validated['capacity'];
+        $roomType->total_rooms = $validated['total_rooms'];
+        $roomType->status = 'active';
+
+        $roomType->save();
 
         return response()->json([
             'message' => 'Room type created successfully.',
@@ -407,7 +409,8 @@ class ManagerController extends Controller
             'status' => 'required|string|in:active,inactive',
         ]);
 
-        $roomType->update(['status' => $validated['status']]);
+        $roomType->status = $validated['status'];
+        $roomType->save();;
 
         return response()->json([
             'message' => 'Room-type status updated successfully.',

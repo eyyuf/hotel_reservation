@@ -170,15 +170,6 @@ Route::get(
     'role:super_admin',
 ]);
 
-Route::get(
-    '/v1/super-admin/audit-logs',
-    [SuperAdminController::class, 'auditLogs']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:super_admin',
-]);
-
 // Manager routes
 Route::get(
     '/v1/manager/hotel',
