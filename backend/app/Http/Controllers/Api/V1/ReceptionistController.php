@@ -131,7 +131,7 @@ class ReceptionistController extends Controller
 
             $reservation->save();
 
-            
+
             $invoice = new Invoice();
 
             $invoice->reservation_id = $reservation->id;
@@ -298,10 +298,12 @@ class ReceptionistController extends Controller
 
             $nightlyRate = $roomType->base_price;
 
-            $totalAmount =
+            $totalAmount = round(
                 $nightlyRate *
                 $numberOfRooms *
-                $nights;
+                $nights,
+                2
+            );
 
             $reservation->check_in_date = $checkInDate;
             $reservation->check_out_date = $checkOutDate;
@@ -317,6 +319,25 @@ class ReceptionistController extends Controller
             }
 
             $reservation->save();
+
+            // Keep the invoice in sync with the reservation's new total.
+            // Only touch it while it's still unpaid — once a payment has
+            // landed against it, silently rewriting the amount would make
+            // the invoice inconsistent with money already collected.
+            $invoice = Invoice::where('reservation_id', $reservation->id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($invoice && $invoice->status === 'unpaid') {
+                $invoice->subtotal = $reservation->total_amount;
+                $invoice->total_amount = round(
+                    (float) $reservation->total_amount
+                        + (float) $invoice->tax_amount
+                        - (float) $invoice->discount_amount,
+                    2
+                );
+                $invoice->save();
+            }
 
             return response()->json([
                 'message' => 'Reservation updated successfully.',
@@ -353,9 +374,22 @@ class ReceptionistController extends Controller
             'cancellation_reason' => 'nullable|string',
         ]);
 
-        $reservation->status = 'cancelled';
-        $reservation->cancellation_reason = $validated['cancellation_reason'] ?? null;
-        $reservation->save();
+        DB::transaction(function () use ($reservation, $validated) {
+            $reservation->status = 'cancelled';
+            $reservation->cancellation_reason = $validated['cancellation_reason'] ?? null;
+            $reservation->save();
+
+            $invoice = Invoice::where('reservation_id', $reservation->id)
+                ->lockForUpdate()
+                ->first();
+
+            // Only void the invoice if it hasn't already been fully paid.
+            // A paid invoice needs a refund process, not a silent status flip.
+            if ($invoice && $invoice->status !== 'paid') {
+                $invoice->status = 'cancelled';
+                $invoice->save();
+            }
+        });
 
         return response()->json([
             'message' => 'Reservation cancelled successfully.',
@@ -449,6 +483,7 @@ class ReceptionistController extends Controller
             // Reservation must belong to receptionist's hotel
             $reservation = Reservation::where('id', $id)
                 ->where('hotel_id', $user->hotel_id)
+                ->lockForUpdate()
                 ->first();
 
             if (!$reservation) {
@@ -534,6 +569,15 @@ class ReceptionistController extends Controller
 
             $invoice->save();
 
+            // Once the invoice is fully paid, move the reservation out of
+            // 'pending' the same way the guest-side simulate() flow does.
+            // Without this, front-desk-paid reservations could never reach
+            // 'confirmed' and would be permanently blocked from check-in.
+            if ($invoice->status === 'paid' && $reservation->status === 'pending') {
+                $reservation->status = 'confirmed';
+                $reservation->save();
+            }
+
             $remainingAmountAfterPayment = max(
                 0,
                 (float) $invoice->total_amount - (float) $totalPaid
@@ -546,6 +590,7 @@ class ReceptionistController extends Controller
                     'invoice_id' => $payment->invoice_id,
                     'reservation_id' => $reservation->id,
                     'booking_reference' => $reservation->booking_reference,
+                    'reservation_status' => $reservation->status,
 
                     'amount' => number_format(
                         (float) $payment->amount,
