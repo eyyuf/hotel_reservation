@@ -215,8 +215,21 @@ class GuestReservationController extends Controller
             ], 422);
         }
 
-        $reservation->status = 'cancelled';
-        $reservation->save();
+        DB::transaction(function () use ($reservation) {
+            $reservation->status = 'cancelled';
+            $reservation->save();
+
+            $invoice = Invoice::where('reservation_id', $reservation->id)
+                ->lockForUpdate()
+                ->first();
+
+            
+            
+            if ($invoice && $invoice->status !== 'paid') {
+                $invoice->status = 'cancelled';
+                $invoice->save();
+            }
+        });
 
         return response()->json([
             'message' => 'Reservation cancelled successfully.',
