@@ -232,6 +232,12 @@ class PaymentController extends Controller
                 : 'partially_paid';
 
             $invoice->save();
+            $reservation = $invoice->reservation;
+
+            if ($invoice->status === 'paid' && $reservation->status === 'pending') {
+                $reservation->status = 'confirmed';
+                $reservation->save();
+            }
 
             return response()->json([
                 'message' => 'Payment simulated successfully.',

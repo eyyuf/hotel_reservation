@@ -10,493 +10,142 @@ use App\Http\Controllers\Api\V1\ReceptionistController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
 use Illuminate\Support\Facades\Route;
 
-// Authentication routes
-Route::post(
-    '/v1/auth/register',
-    [AuthController::class, 'register']
-);
+/*
+|--------------------------------------------------------------------------
+| Authentication routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('v1/auth')->group(function () {
+    Route::post('register', [AuthController::class, 'register']);
+    Route::post('login', [AuthController::class, 'login']);
 
-Route::post(
-    '/v1/auth/login',
-    [AuthController::class, 'login']
-);
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::post('logout', [AuthController::class, 'logout']);
+    });
 
-Route::post(
-    '/v1/auth/logout',
-    [AuthController::class, 'logout']
-)->middleware([
-    'auth:sanctum',
-]);
+    Route::middleware(['auth:sanctum', 'active'])->group(function () {
+        Route::get('me', [AuthController::class, 'me']);
+        Route::patch('profile', [AuthController::class, 'profile']);
+    });
+});
 
-Route::get(
-    '/v1/auth/me',
-    [AuthController::class, 'me']
-)->middleware([
-    'auth:sanctum',
-    'active',
-]);
+/*
+|--------------------------------------------------------------------------
+| Public hotel routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('v1/hotels')->group(function () {
+    Route::get('/', [PublicHotelController::class, 'index']);
+    Route::get('{hotel}', [PublicHotelController::class, 'show']);
+    Route::get('{hotel}/room-types', [PublicHotelController::class, 'roomTypes']);
+    Route::get('{hotel}/room-types/{roomType}', [PublicHotelController::class, 'roomType']);
+    Route::get('{hotel}/availability', [PublicHotelController::class, 'availability']);
+});
 
-Route::patch(
-    '/v1/auth/profile',
-    [AuthController::class, 'profile']
-)->middleware([
-    'auth:sanctum',
-    'active',
-]);
+/*
+|--------------------------------------------------------------------------
+| Super-admin routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('v1/super-admin')
+    ->middleware(['auth:sanctum', 'active', 'role:super_admin'])
+    ->group(function () {
+        Route::get('hotels', [SuperAdminController::class, 'hotels']);
+        Route::post('hotels', [SuperAdminController::class, 'createHotel']);
+        Route::get('hotels/{hotel}', [SuperAdminController::class, 'hotel']);
+        Route::patch('hotels/{hotel}', [SuperAdminController::class, 'updateHotel']);
+        Route::patch('hotels/{hotel}/status', [SuperAdminController::class, 'hotelStatus']);
 
-// Public hotel routes
-Route::get(
-    '/v1/hotels',
-    [PublicHotelController::class, 'index']
-);
+        Route::get('hotels/{hotel}/managers', [SuperAdminController::class, 'managers']);
+        Route::post('hotels/{hotel}/managers', [SuperAdminController::class, 'createManager']);
+        Route::get('managers/{manager}', [SuperAdminController::class, 'showManager']);
+        Route::patch('managers/{manager}', [SuperAdminController::class, 'updateManager']);
+        Route::patch('managers/{manager}/status', [SuperAdminController::class, 'managerStatus']);
 
-Route::get(
-    '/v1/hotels/{hotel}',
-    [PublicHotelController::class, 'show']
-);
+        Route::get('reports', [SuperAdminController::class, 'reports']);
+    });
 
-Route::get(
-    '/v1/hotels/{hotel}/room-types',
-    [PublicHotelController::class, 'roomTypes']
-);
+/*
+|--------------------------------------------------------------------------
+| Manager routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('v1/manager')
+    ->middleware(['auth:sanctum', 'active', 'role:hotel_manager'])
+    ->group(function () {
+        Route::get('hotel', [ManagerController::class, 'hotel']);
+        Route::patch('hotel', [ManagerController::class, 'updateHotel']);
 
-Route::get(
-    '/v1/hotels/{hotel}/room-types/{roomType}',
-    [PublicHotelController::class, 'roomType']
-);
+        Route::get('receptionists', [ManagerController::class, 'receptionists']);
+        Route::post('receptionists', [ManagerController::class, 'createReceptionist']);
+        Route::get('receptionists/{receptionist}', [ManagerController::class, 'receptionist']);
+        Route::patch('receptionists/{receptionist}', [ManagerController::class, 'updateReceptionist']);
+        Route::patch('receptionists/{receptionist}/status', [ManagerController::class, 'receptionistStatus']);
 
-Route::get(
-    '/v1/hotels/{hotel}/availability',
-    [PublicHotelController::class, 'availability']
-);
+        Route::get('room-types', [ManagerController::class, 'roomTypes']);
+        Route::post('room-types', [ManagerController::class, 'createRoomType']);
+        Route::get('room-types/{roomType}', [ManagerController::class, 'roomType']);
+        Route::patch('room-types/{roomType}', [ManagerController::class, 'updateRoomType']);
+        Route::patch('room-types/{roomType}/status', [ManagerController::class, 'roomTypeStatus']);
 
-// Super-admin routes
-Route::get(
-    '/v1/super-admin/hotels',
-    [SuperAdminController::class, 'hotels']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:super_admin',
-]);
+        Route::get('reservations', [ManagerController::class, 'reservations']);
+        Route::get('payments', [ManagerController::class, 'payments']);
 
-Route::post(
-    '/v1/super-admin/hotels',
-    [SuperAdminController::class, 'createHotel']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:super_admin',
-]);
+        Route::get('invoices', [InvoiceController::class, 'managerIndex']);
+        Route::get('invoices/{invoice}', [InvoiceController::class, 'managerShow']);
 
-Route::get(
-    '/v1/super-admin/hotels/{hotel}',
-    [SuperAdminController::class, 'hotel']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:super_admin',
-]);
+        Route::get('reports', [ManagerController::class, 'reports']);
+    });
 
-Route::patch(
-    '/v1/super-admin/hotels/{hotel}',
-    [SuperAdminController::class, 'updateHotel']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:super_admin',
-]);
+/*
+|--------------------------------------------------------------------------
+| Guest routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('v1/guest')
+    ->middleware(['auth:sanctum', 'active', 'role:guest'])
+    ->group(function () {
+        Route::get('reservations', [GuestReservationController::class, 'index']);
+        Route::post('reservations', [GuestReservationController::class, 'store']);
+        Route::get('reservations/{reservation}', [GuestReservationController::class, 'show']);
+        Route::post('reservations/{reservation}/cancel', [GuestReservationController::class, 'cancel']);
+        Route::get('reservations/{reservation}/invoice', [InvoiceController::class, 'guestShow']);
 
-Route::patch(
-    '/v1/super-admin/hotels/{hotel}/status',
-    [SuperAdminController::class, 'hotelStatus']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:super_admin',
-]);
+        Route::get('reservations/{reservation}/payments', [PaymentController::class, 'guestIndex']);
+        Route::post('reservations/{reservation}/payments', [PaymentController::class, 'guestStore']);
+        Route::get('payments/{payment}', [PaymentController::class, 'guestShow']);
+    });
 
-Route::get(
-    '/v1/super-admin/hotels/{hotel}/managers',
-    [SuperAdminController::class, 'managers']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:super_admin',
-]);
+/*
+|--------------------------------------------------------------------------
+| Receptionist routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('v1/receptionist')
+    ->middleware(['auth:sanctum', 'active', 'role:receptionist'])
+    ->group(function () {
+        Route::get('reservations', [ReceptionistController::class, 'index']);
+        Route::post('reservations', [ReceptionistController::class, 'store']);
+        Route::get('reservations/{reservation}', [ReceptionistController::class, 'show']);
+        Route::patch('reservations/{reservation}', [ReceptionistController::class, 'update']);
+        Route::post('reservations/{reservation}/cancel', [ReceptionistController::class, 'cancel']);
+        Route::post('reservations/{reservation}/check-in', [ReceptionistController::class, 'checkIn']);
+        Route::post('reservations/{reservation}/check-out', [ReceptionistController::class, 'checkOut']);
 
-Route::post(
-    '/v1/super-admin/hotels/{hotel}/managers',
-    [SuperAdminController::class, 'createManager']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:super_admin',
-]);
+        Route::get('reservations/{reservation}/payments', [ReceptionistController::class, 'payments']);
+        Route::post('reservations/{reservation}/payments', [ReceptionistController::class, 'recordPayment']);
+        Route::get('reservations/{reservation}/invoice', [InvoiceController::class, 'receptionistShow']);
+    });
 
-Route::get(
-    '/v1/super-admin/managers/{manager}',
-    [SuperAdminController::class, 'showManager']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:super_admin',
-]);
-
-Route::patch(
-    '/v1/super-admin/managers/{manager}',
-    [SuperAdminController::class, 'updateManager']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:super_admin',
-]);
-
-Route::patch(
-    '/v1/super-admin/managers/{manager}/status',
-    [SuperAdminController::class, 'managerStatus']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:super_admin',
-]);
-
-Route::get(
-    '/v1/super-admin/reports',
-    [SuperAdminController::class, 'reports']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:super_admin',
-]);
-
-// Manager routes
-Route::get(
-    '/v1/manager/hotel',
-    [ManagerController::class, 'hotel']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::patch(
-    '/v1/manager/hotel',
-    [ManagerController::class, 'updateHotel']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::get(
-    '/v1/manager/receptionists',
-    [ManagerController::class, 'receptionists']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::post(
-    '/v1/manager/receptionists',
-    [ManagerController::class, 'createReceptionist']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::get(
-    '/v1/manager/receptionists/{receptionist}',
-    [ManagerController::class, 'receptionist']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::patch(
-    '/v1/manager/receptionists/{receptionist}',
-    [ManagerController::class, 'updateReceptionist']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::patch(
-    '/v1/manager/receptionists/{receptionist}/status',
-    [ManagerController::class, 'receptionistStatus']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::get(
-    '/v1/manager/room-types',
-    [ManagerController::class, 'roomTypes']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::post(
-    '/v1/manager/room-types',
-    [ManagerController::class, 'createRoomType']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::get(
-    '/v1/manager/room-types/{roomType}',
-    [ManagerController::class, 'roomType']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::patch(
-    '/v1/manager/room-types/{roomType}',
-    [ManagerController::class, 'updateRoomType']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::patch(
-    '/v1/manager/room-types/{roomType}/status',
-    [ManagerController::class, 'roomTypeStatus']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::get(
-    '/v1/manager/reservations',
-    [ManagerController::class, 'reservations']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::get(
-    '/v1/manager/payments',
-    [ManagerController::class, 'payments']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::get(
-    '/v1/manager/invoices',
-    [InvoiceController::class, 'managerIndex']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::get(
-    '/v1/manager/invoices/{invoice}',
-    [InvoiceController::class, 'managerShow']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-Route::get(
-    '/v1/manager/reports',
-    [ManagerController::class, 'reports']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:hotel_manager',
-]);
-
-
-
-// Guest reservation routes
-Route::get(
-    '/v1/guest/reservations',
-    [GuestReservationController::class, 'index']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:guest',
-]);
-
-Route::post(
-    '/v1/guest/reservations',
-    [GuestReservationController::class, 'store']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:guest',
-]);
-
-Route::get(
-    '/v1/guest/reservations/{reservation}',
-    [GuestReservationController::class, 'show']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:guest',
-]);
-
-Route::post(
-    '/v1/guest/reservations/{reservation}/cancel',
-    [GuestReservationController::class, 'cancel']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:guest',
-]);
-
-Route::get(
-    '/v1/guest/reservations/{reservation}/invoice',
-    [InvoiceController::class, 'guestShow']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:guest',
-]);
-
-// Guest payment routes
-Route::get(
-    '/v1/guest/reservations/{reservation}/payments',
-    [PaymentController::class, 'guestIndex']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:guest',
-]);
-
-Route::post(
-    '/v1/guest/reservations/{reservation}/payments',
-    [PaymentController::class, 'guestStore']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:guest',
-]);
-
-Route::get(
-    '/v1/guest/payments/{payment}',
-    [PaymentController::class, 'guestShow']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:guest',
-]);
-
-// Simulated payment route
-// TODO: Allow simulated payment only in the local environment.
-Route::post(
-    '/v1/payments/{payment}/simulate',
-    [PaymentController::class, 'simulate']
-)->middleware([
-    'auth:sanctum',
-    'active',
-]);
-
-// Receptionist routes
-Route::get(
-    '/v1/receptionist/reservations',
-    [ReceptionistController::class, 'index']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:receptionist',
-]);
-
-Route::post(
-    '/v1/receptionist/reservations',
-    [ReceptionistController::class, 'store']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:receptionist',
-]);
-
-Route::get(
-    '/v1/receptionist/reservations/{reservation}',
-    [ReceptionistController::class, 'show']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:receptionist',
-]);
-
-Route::patch(
-    '/v1/receptionist/reservations/{reservation}',
-    [ReceptionistController::class, 'update']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:receptionist',
-]);
-
-Route::post(
-    '/v1/receptionist/reservations/{reservation}/cancel',
-    [ReceptionistController::class, 'cancel']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:receptionist',
-]);
-
-Route::get(
-    '/v1/receptionist/reservations/{reservation}/payments',
-    [ReceptionistController::class, 'payments']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:receptionist',
-]);
-
-Route::post(
-    '/v1/receptionist/reservations/{reservation}/payments',
-    [ReceptionistController::class, 'recordPayment']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:receptionist',
-]);
-
-Route::get(
-    '/v1/receptionist/reservations/{reservation}/invoice',
-    [InvoiceController::class, 'receptionistShow']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:receptionist',
-]);
-
-Route::post(
-    '/v1/receptionist/reservations/{reservation}/check-in',
-    [ReceptionistController::class, 'checkIn']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:receptionist',
-]);
-
-Route::post(
-    '/v1/receptionist/reservations/{reservation}/check-out',
-    [ReceptionistController::class, 'checkOut']
-)->middleware([
-    'auth:sanctum',
-    'active',
-    'role:receptionist',
-]); 
+/*
+|--------------------------------------------------------------------------
+| Simulated payment route
+|--------------------------------------------------------------------------
+| TODO: Restrict to the local environment only (e.g. wrap in
+| app()->environment('local') or gate behind a dedicated
+| 'role:can_simulate_payment' / config flag) before deploying —
+| currently reachable by any authenticated, active user regardless
+| of role or environment.
+*/
+Route::post('/v1/payments/{payment}/simulate', [PaymentController::class, 'simulate'])
+    ->middleware(['auth:sanctum', 'active']);

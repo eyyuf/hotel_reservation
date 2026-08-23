@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use App\Models\Invoice;
 
 class GuestReservationController extends Controller
 {
@@ -129,6 +130,18 @@ class GuestReservationController extends Controller
             $reservation->status = 'pending';
             $reservation->special_requests = $validated['special_requests'] ?? null;
             $reservation->save();
+            $invoice = new Invoice();
+
+            $invoice->reservation_id = $reservation->id;
+            $invoice->invoice_number = 'INV-' . $reservation->id . '-' . strtoupper(Str::random(6));
+            $invoice->subtotal = $reservation->total_amount;
+            $invoice->tax_amount = 0;
+            $invoice->discount_amount = 0;
+            $invoice->total_amount = $reservation->total_amount;
+            $invoice->status = 'unpaid';
+            $invoice->issued_at = now();
+
+            $invoice->save();
 
             return $reservation;
         });
