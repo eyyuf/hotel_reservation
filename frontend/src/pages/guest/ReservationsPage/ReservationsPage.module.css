@@ -1,0 +1,48 @@
+.page {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--color-gray-200);
+  margin-bottom: var(--space-6);
+}
+
+.tab {
+  padding: var(--space-2) var(--space-4);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-gray-600);
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: var(--color-black);
+}
+
+.activeTab {
+  color: var(--color-black);
+  border-bottom-color: var(--color-black);
+}
+
+.actionLink {
+  color: var(--color-gray-600);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.actionLink:hover {
+  text-decoration: underline;
+  color: var(--color-black);
+}
+
+.pagination {
+  margin-top: var(--space-6);
+  display: flex;
+  justify-content: center;
+}
