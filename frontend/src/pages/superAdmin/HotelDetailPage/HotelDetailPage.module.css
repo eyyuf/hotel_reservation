@@ -1,0 +1,9 @@
+.container { display: flex; flex-direction: column; gap: var(--space-6); padding: var(--space-6); }
+.breadcrumb { font-size: 14px; color: var(--color-gray-500); }
+.breadcrumb a { color: var(--color-black); text-decoration: none; }
+.infoCard { padding: var(--space-6); background: var(--color-white); border: 1px solid var(--color-gray-200); border-radius: var(--radius-md); }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); }
+.header h2 { margin: 0; }
+.managersSection { display: flex; flex-direction: column; gap: var(--space-4); }
+.sectionHeader { display: flex; justify-content: space-between; align-items: center; }
+.form { display: flex; flex-direction: column; gap: var(--space-4); }
