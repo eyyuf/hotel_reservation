@@ -1,0 +1,93 @@
+/* ============================================
+   Hotel Reservation System — Typography
+   Heading hierarchy and text utility classes.
+   ============================================ */
+
+/* ── Page Title ───────────────────────────── */
+.page-title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  color: var(--color-black);
+  letter-spacing: -0.02em;
+}
+
+/* ── Section Title ────────────────────────── */
+.section-title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  color: var(--color-black);
+}
+
+/* ── Card Title ───────────────────────────── */
+.card-title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  color: var(--color-black);
+}
+
+/* ── Body Text ────────────────────────────── */
+.body-text {
+  font-size: var(--text-base);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-normal);
+  color: var(--color-black);
+}
+
+.body-text-md {
+  font-size: var(--text-md);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-normal);
+  color: var(--color-black);
+}
+
+/* ── Supporting Text ──────────────────────── */
+.supporting-text {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-normal);
+  color: var(--color-gray-500);
+}
+
+/* ── Small Metadata ───────────────────────── */
+.small-meta {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-normal);
+  color: var(--color-gray-500);
+}
+
+/* ── Label ────────────────────────────────── */
+.label {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-normal);
+  color: var(--color-black);
+}
+
+/* ── Numeric / Price ──────────────────────── */
+.price {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-black);
+}
+
+.price-lg {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-black);
+}
+
+/* ── Link ─────────────────────────────────── */
+.text-link {
+  color: var(--color-black);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity var(--transition-fast);
+}
+
+.text-link:hover {
+  opacity: 0.7;
+}
