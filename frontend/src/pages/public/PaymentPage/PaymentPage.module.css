@@ -1,0 +1,132 @@
+.page {
+  padding: var(--space-8) 0 var(--space-16);
+  background-color: var(--color-gray-50);
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+.progress {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+  font-size: 14px;
+  color: var(--color-gray-500);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+
+.step {
+  white-space: nowrap;
+}
+
+.active {
+  color: var(--color-black);
+  font-weight: 600;
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  
+  .main {
+    flex: 2;
+  }
+  
+  .sidebar {
+    flex: 1;
+  }
+}
+
+.card {
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-gray-200);
+  padding: var(--space-6);
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-black);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.methodList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.methodOption {
+  display: flex;
+  align-items: center;
+  padding: var(--space-4);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.methodOption:hover {
+  border-color: var(--color-gray-400);
+}
+
+.selected {
+  border-color: var(--color-black);
+  background-color: var(--color-gray-50);
+}
+
+.radio {
+  margin-right: var(--space-4);
+  accent-color: var(--color-black);
+}
+
+.methodIcon {
+  margin-right: var(--space-4);
+  color: var(--color-gray-700);
+}
+
+.methodName {
+  font-weight: 500;
+  color: var(--color-black);
+}
+
+.action {
+  margin-top: var(--space-6);
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  font-size: 14px;
+}
+
+.summaryItem:last-child {
+  margin-bottom: 0;
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-gray-100);
+  font-size: 16px;
+  align-items: center;
+}
+
+.totalAmount {
+  font-size: 20px;
+}

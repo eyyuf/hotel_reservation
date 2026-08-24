@@ -1,0 +1,210 @@
+.page {
+  padding-bottom: var(--space-16);
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-gray-600);
+  text-decoration: none;
+  margin-bottom: var(--space-4);
+  font-size: 14px;
+}
+
+.backLink:hover {
+  color: var(--color-black);
+}
+
+.header {
+  margin-bottom: var(--space-6);
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-black);
+  margin-bottom: var(--space-2);
+}
+
+.location {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-gray-600);
+  font-size: 16px;
+}
+
+.hero {
+  height: 400px;
+  background-color: var(--color-gray-100);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-8);
+}
+
+.placeholderIcon {
+  color: var(--color-gray-300);
+}
+
+.skeletonHero {
+  margin: var(--space-6) 0;
+}
+
+.section {
+  margin-bottom: var(--space-12);
+}
+
+.sectionTitle {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+  color: var(--color-black);
+}
+
+.description {
+  color: var(--color-gray-700);
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.dateWarning {
+  background-color: var(--color-info-bg);
+  color: var(--color-info);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-6);
+}
+
+.roomList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.roomCard {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--color-white);
+}
+
+@media (min-width: 768px) {
+  .roomCard {
+    flex-direction: row;
+  }
+}
+
+.roomImage {
+  height: 200px;
+  background-color: var(--color-gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .roomImage {
+    width: 250px;
+    height: auto;
+  }
+}
+
+.roomInfo {
+  padding: var(--space-4);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.roomTitle {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.roomMeta {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  color: var(--color-gray-600);
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+}
+
+.roomDesc {
+  color: var(--color-gray-600);
+  margin-bottom: var(--space-4);
+  flex: 1;
+}
+
+.availability {
+  margin-top: auto;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.available {
+  color: var(--color-success);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.unavailable {
+  color: var(--color-error);
+}
+
+.roomAction {
+  padding: var(--space-4);
+  background-color: var(--color-gray-50);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-4);
+  border-top: 1px solid var(--color-gray-200);
+}
+
+@media (min-width: 768px) {
+  .roomAction {
+    width: 250px;
+    border-top: none;
+    border-left: 1px solid var(--color-gray-200);
+  }
+}
+
+.price {
+  text-align: center;
+}
+
+.currency {
+  font-size: 14px;
+  color: var(--color-gray-600);
+  margin-right: 4px;
+}
+
+.amount {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-black);
+}
+
+.period {
+  font-size: 14px;
+  color: var(--color-gray-600);
+}
