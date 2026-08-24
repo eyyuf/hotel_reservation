@@ -1,0 +1,129 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  background-color: var(--color-white);
+  border-bottom: 1px solid var(--color-gray-200);
+  height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: 50; /* Z-sticky equiv */
+}
+
+.navContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4);
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--color-black);
+  text-decoration: none;
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.navLink {
+  color: var(--color-black);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity var(--transition-base);
+}
+
+.navLink:hover {
+  opacity: 0.7;
+}
+
+.navLink:focus-visible {
+  outline: 2px solid var(--color-black);
+  outline-offset: 2px;
+}
+
+.registerBtn {
+  background-color: var(--color-black);
+  color: var(--color-white);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-weight: 500;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  transition: opacity var(--transition-base);
+}
+
+.registerBtn:hover {
+  opacity: 0.9;
+}
+
+.profileBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--color-gray-100);
+  color: var(--color-black);
+}
+
+.mobileMenuBtn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-2);
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.main {
+  flex: 1;
+}
+
+.footer {
+  text-align: center;
+  padding: var(--space-6);
+  border-top: 1px solid var(--color-gray-200);
+  background-color: var(--color-white);
+  font-size: 14px;
+  color: var(--color-gray-600);
+}
+
+@media (max-width: 767px) {
+  .mobileMenuBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .navLinks {
+    display: none;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background-color: var(--color-white);
+    flex-direction: column;
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--color-gray-200);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .navLinksOpen {
+    display: flex;
+  }
+}

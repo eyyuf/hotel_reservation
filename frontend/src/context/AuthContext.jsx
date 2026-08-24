@@ -1,0 +1,130 @@
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { authApi } from '../services/auth/authApi';
+
+const AuthContext = createContext(null);
+
+const initialState = {
+  user: null,
+  token: localStorage.getItem('auth_token') || null,
+  isAuthenticated: !!localStorage.getItem('auth_token'),
+  isLoading: true,
+};
+
+function authReducer(state, action) {
+  switch (action.type) {
+    case 'INITIALIZE':
+      return {
+        ...state,
+        isAuthenticated: action.payload.isAuthenticated,
+        user: action.payload.user,
+        isLoading: false,
+      };
+    case 'LOGIN':
+      return {
+        ...state,
+        isAuthenticated: true,
+        user: action.payload.user,
+        token: action.payload.token,
+      };
+    case 'LOGOUT':
+      return {
+        ...state,
+        isAuthenticated: false,
+        user: null,
+        token: null,
+      };
+    case 'UPDATE_PROFILE':
+      return {
+        ...state,
+        user: action.payload.user,
+      };
+    default:
+      return state;
+  }
+}
+
+export function AuthProvider({ children }) {
+  const [state, dispatch] = useReducer(authReducer, initialState);
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        try {
+          const response = await authApi.getMe();
+          dispatch({
+            type: 'INITIALIZE',
+            payload: {
+              isAuthenticated: true,
+              user: response.data?.user ?? response.data?.data ?? response.data,
+            },
+          });
+        } catch (error) {
+          localStorage.removeItem('auth_token');
+          dispatch({
+            type: 'INITIALIZE',
+            payload: { isAuthenticated: false, user: null },
+          });
+        }
+      } else {
+        dispatch({
+          type: 'INITIALIZE',
+          payload: { isAuthenticated: false, user: null },
+        });
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
+  const login = async (email, password) => {
+    try {
+      const response = await authApi.login({ email, password });
+      const { token, user } = response.data;
+      localStorage.setItem('auth_token', token);
+      dispatch({ type: 'LOGIN', payload: { token, user } });
+      return user;
+    } catch (error) {
+      const message = error.response?.data?.message || 'Invalid credentials. Please try again.';
+      throw new Error(message);
+    }
+  };
+
+  const register = async (data) => {
+    await authApi.register(data);
+    return login(data.email, data.password);
+  };
+
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      console.error('Logout error', error);
+    } finally {
+      localStorage.removeItem('auth_token');
+      dispatch({ type: 'LOGOUT' });
+      window.location.href = '/login';
+    }
+  };
+
+  const updateProfile = async (data) => {
+    const response = await authApi.updateProfile(data);
+    const updatedUser = response.data?.user ?? response.data?.data ?? response.data;
+    dispatch({ type: 'UPDATE_PROFILE', payload: { user: updatedUser } });
+    return updatedUser;
+  };
+
+  return (
+    <AuthContext.Provider value={{ ...state, login, register, logout, updateProfile }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}

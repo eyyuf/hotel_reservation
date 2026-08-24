@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Reservation;
 use App\Models\RoomType;
+use App\Models\Invoice;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -109,11 +110,11 @@ class ReceptionistController extends Controller
             $nights = $checkIn->diff($checkOut)->days ?: 1;
 
             $nightlyRate = $roomType->base_price;
-            $totalAmount = $nightlyRate * $numberOfRooms * $nights;
+            $totalAmount = round($nightlyRate * $numberOfRooms * $nights, 2);
 
             $reservation = new Reservation();
 
-            $reservation->booking_reference = (string) Str::uuid();
+            $reservation->booking_reference = 'BR-' . Str::uuid();
             $reservation->hotel_id = $user->hotel_id;
             $reservation->guest_user_id = $validated['guest_user_id'] ?? null;
             $reservation->room_type_id = $validated['room_type_id'];
@@ -129,6 +130,20 @@ class ReceptionistController extends Controller
             $reservation->status = 'pending';
 
             $reservation->save();
+
+
+            $invoice = new Invoice();
+
+            $invoice->reservation_id = $reservation->id;
+            $invoice->invoice_number = 'INV-' . $reservation->id . '-' . strtoupper(Str::random(6));
+            $invoice->subtotal = $reservation->total_amount;
+            $invoice->tax_amount = 0;
+            $invoice->discount_amount = 0;
+            $invoice->total_amount = $reservation->total_amount;
+            $invoice->status = 'unpaid';
+            $invoice->issued_at = now();
+
+            $invoice->save();
 
             return response()->json([
                 'message' => 'Reservation created successfully.',
@@ -163,152 +178,173 @@ class ReceptionistController extends Controller
     }
 
     public function update(Request $request, $id): JsonResponse
-{
-    $user = $request->user();
+    {
+        $user = $request->user();
 
-    if (!$user->hotel_id) {
-        return response()->json([
-            'message' => 'Unauthorized hotel context.'
-        ], 403);
-    }
+        if (!$user->hotel_id) {
+            return response()->json([
+                'message' => 'Unauthorized hotel context.'
+            ], 403);
+        }
 
-    $reservation = Reservation::where('id', $id)
-        ->where('hotel_id', $user->hotel_id)
-        ->first();
-
-    if (!$reservation) {
-        return response()->json([
-            'message' => 'Reservation not found.',
-        ], 404);
-    }
-
-    // Validate first
-    $validated = $request->validate([
-        'room_type_id' => [
-            'sometimes',
-            Rule::exists('room_types', 'id')->where(function ($query) use ($user) {
-                return $query->where('hotel_id', $user->hotel_id)
-                    ->where('status', 'active');
-            }),
-        ],
-        'check_in_date'    => 'sometimes|date',
-        'check_out_date'   => 'sometimes|date',
-        'number_of_rooms'  => 'sometimes|integer|min:1',
-        'adults'           => 'sometimes|integer|min:1',
-        'children'         => 'sometimes|integer|min:0',
-        'special_requests' => 'nullable|string',
-    ]);
-
-    // Use new dates if provided, otherwise existing dates
-    $checkInDate = $validated['check_in_date']
-        ?? $reservation->check_in_date;
-
-    $checkOutDate = $validated['check_out_date']
-        ?? $reservation->check_out_date;
-
-    // Parse dates AFTER validation
-    $checkIn = new \DateTime((string) $checkInDate);
-    $checkOut = new \DateTime((string) $checkOutDate);
-
-    if ($checkOut <= $checkIn) {
-        return response()->json([
-            'message' => 'Check-out date must be after check-in date.',
-        ], 422);
-    }
-
-    return DB::transaction(function () use (
-        $reservation,
-        $validated,
-        $checkInDate,
-        $checkOutDate,
-        $checkIn,
-        $checkOut
-    ) {
-        $roomTypeId = $validated['room_type_id']
-            ?? $reservation->room_type_id;
-
-        $numberOfRooms = $validated['number_of_rooms']
-            ?? $reservation->number_of_rooms;
-
-        $adults = $validated['adults']
-            ?? $reservation->adults;
-
-        $children = $validated['children']
-            ?? $reservation->children;
-
-        $roomType = RoomType::where('id', $roomTypeId)
-            ->where('hotel_id', $reservation->hotel_id)
-            ->where('status', 'active')
-            ->lockForUpdate()
+        $reservation = Reservation::where('id', $id)
+            ->where('hotel_id', $user->hotel_id)
             ->first();
 
-        if (!$roomType) {
+        if (!$reservation) {
             return response()->json([
-                'message' => 'Selected room type is not available.',
-            ], 422);
+                'message' => 'Reservation not found.',
+            ], 404);
         }
 
-        // Capacity validation
-        $totalGuests = $adults + $children;
-        $maxAllowedCapacity = $roomType->capacity * $numberOfRooms;
-
-        if ($totalGuests > $maxAllowedCapacity) {
-            return response()->json([
-                'message' => "Selected guest count ($totalGuests) exceeds maximum capacity ($maxAllowedCapacity) for $numberOfRooms room(s).",
-            ], 422);
-        }
-
-        // Availability check, excluding this reservation
-        $reservedRooms = Reservation::where('room_type_id', $roomTypeId)
-            ->where('id', '!=', $reservation->id)
-            ->whereIn('status', [
-                'pending',
-                'confirmed',
-                'checked_in',
-            ])
-            ->where('check_in_date', '<', $checkOutDate)
-            ->where('check_out_date', '>', $checkInDate)
-            ->sum('number_of_rooms');
-
-        $availableRooms = $roomType->total_rooms - $reservedRooms;
-
-        if ($numberOfRooms > $availableRooms) {
-            return response()->json([
-                'message' => 'Requested room changes are not available for the selected dates.',
-            ], 422);
-        }
-
-        // Recalculate pricing
-        $nights = $checkIn->diff($checkOut)->days;
-
-        $nightlyRate = $roomType->base_price;
-
-        $totalAmount =
-            $nightlyRate *
-            $numberOfRooms *
-            $nights;
-
-        $reservation->check_in_date = $checkInDate;
-        $reservation->check_out_date = $checkOutDate;
-        $reservation->room_type_id = $roomTypeId;
-        $reservation->number_of_rooms = $numberOfRooms;
-        $reservation->adults = $adults;
-        $reservation->children = $children;
-        $reservation->nightly_rate = $nightlyRate;
-        $reservation->total_amount = $totalAmount;
-
-        if (array_key_exists('special_requests', $validated)) {
-            $reservation->special_requests = $validated['special_requests'];
-        }
-
-        $reservation->save();
-
-        return response()->json([
-            'message' => 'Reservation updated successfully.',
-            'data'    => $reservation,
+        // Validate first
+        $validated = $request->validate([
+            'room_type_id' => [
+                'sometimes',
+                Rule::exists('room_types', 'id')->where(function ($query) use ($user) {
+                    return $query->where('hotel_id', $user->hotel_id)
+                        ->where('status', 'active');
+                }),
+            ],
+            'check_in_date'    => 'sometimes|date',
+            'check_out_date'   => 'sometimes|date',
+            'number_of_rooms'  => 'sometimes|integer|min:1',
+            'adults'           => 'sometimes|integer|min:1',
+            'children'         => 'sometimes|integer|min:0',
+            'special_requests' => 'nullable|string',
         ]);
-    });
-}
+
+        // Use new dates if provided, otherwise existing dates
+        $checkInDate = $validated['check_in_date']
+            ?? $reservation->check_in_date;
+
+        $checkOutDate = $validated['check_out_date']
+            ?? $reservation->check_out_date;
+
+        // Parse dates AFTER validation
+        $checkIn = new \DateTime((string) $checkInDate);
+        $checkOut = new \DateTime((string) $checkOutDate);
+
+        if ($checkOut <= $checkIn) {
+            return response()->json([
+                'message' => 'Check-out date must be after check-in date.',
+            ], 422);
+        }
+
+        return DB::transaction(function () use (
+            $reservation,
+            $validated,
+            $checkInDate,
+            $checkOutDate,
+            $checkIn,
+            $checkOut
+        ) {
+            $roomTypeId = $validated['room_type_id']
+                ?? $reservation->room_type_id;
+
+            $numberOfRooms = $validated['number_of_rooms']
+                ?? $reservation->number_of_rooms;
+
+            $adults = $validated['adults']
+                ?? $reservation->adults;
+
+            $children = $validated['children']
+                ?? $reservation->children;
+
+            $roomType = RoomType::where('id', $roomTypeId)
+                ->where('hotel_id', $reservation->hotel_id)
+                ->where('status', 'active')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$roomType) {
+                return response()->json([
+                    'message' => 'Selected room type is not available.',
+                ], 422);
+            }
+
+            // Capacity validation
+            $totalGuests = $adults + $children;
+            $maxAllowedCapacity = $roomType->capacity * $numberOfRooms;
+
+            if ($totalGuests > $maxAllowedCapacity) {
+                return response()->json([
+                    'message' => "Selected guest count ($totalGuests) exceeds maximum capacity ($maxAllowedCapacity) for $numberOfRooms room(s).",
+                ], 422);
+            }
+
+            // Availability check, excluding this reservation
+            $reservedRooms = Reservation::where('room_type_id', $roomTypeId)
+                ->where('id', '!=', $reservation->id)
+                ->whereIn('status', [
+                    'pending',
+                    'confirmed',
+                    'checked_in',
+                ])
+                ->where('check_in_date', '<', $checkOutDate)
+                ->where('check_out_date', '>', $checkInDate)
+                ->sum('number_of_rooms');
+
+            $availableRooms = $roomType->total_rooms - $reservedRooms;
+
+            if ($numberOfRooms > $availableRooms) {
+                return response()->json([
+                    'message' => 'Requested room changes are not available for the selected dates.',
+                ], 422);
+            }
+
+            // Recalculate pricing
+            $nights = $checkIn->diff($checkOut)->days;
+
+            $nightlyRate = $roomType->base_price;
+
+            $totalAmount = round(
+                $nightlyRate *
+                $numberOfRooms *
+                $nights,
+                2
+            );
+
+            $reservation->check_in_date = $checkInDate;
+            $reservation->check_out_date = $checkOutDate;
+            $reservation->room_type_id = $roomTypeId;
+            $reservation->number_of_rooms = $numberOfRooms;
+            $reservation->adults = $adults;
+            $reservation->children = $children;
+            $reservation->nightly_rate = $nightlyRate;
+            $reservation->total_amount = $totalAmount;
+
+            if (array_key_exists('special_requests', $validated)) {
+                $reservation->special_requests = $validated['special_requests'];
+            }
+
+            $reservation->save();
+
+            // Keep the invoice in sync with the reservation's new total.
+            // Only touch it while it's still unpaid — once a payment has
+            // landed against it, silently rewriting the amount would make
+            // the invoice inconsistent with money already collected.
+            $invoice = Invoice::where('reservation_id', $reservation->id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($invoice && $invoice->status === 'unpaid') {
+                $invoice->subtotal = $reservation->total_amount;
+                $invoice->total_amount = round(
+                    (float) $reservation->total_amount
+                        + (float) $invoice->tax_amount
+                        - (float) $invoice->discount_amount,
+                    2
+                );
+                $invoice->save();
+            }
+
+            return response()->json([
+                'message' => 'Reservation updated successfully.',
+                'data'    => $reservation,
+            ]);
+        });
+    }
 
     public function cancel(Request $request, $id): JsonResponse
     {
@@ -338,9 +374,22 @@ class ReceptionistController extends Controller
             'cancellation_reason' => 'nullable|string',
         ]);
 
-        $reservation->status = 'cancelled';
-        $reservation->cancellation_reason = $validated['cancellation_reason'] ?? null;
-        $reservation->save();
+        DB::transaction(function () use ($reservation, $validated) {
+            $reservation->status = 'cancelled';
+            $reservation->cancellation_reason = $validated['cancellation_reason'] ?? null;
+            $reservation->save();
+
+            $invoice = Invoice::where('reservation_id', $reservation->id)
+                ->lockForUpdate()
+                ->first();
+
+            // Only void the invoice if it hasn't already been fully paid.
+            // A paid invoice needs a refund process, not a silent status flip.
+            if ($invoice && $invoice->status !== 'paid') {
+                $invoice->status = 'cancelled';
+                $invoice->save();
+            }
+        });
 
         return response()->json([
             'message' => 'Reservation cancelled successfully.',
@@ -434,6 +483,7 @@ class ReceptionistController extends Controller
             // Reservation must belong to receptionist's hotel
             $reservation = Reservation::where('id', $id)
                 ->where('hotel_id', $user->hotel_id)
+                ->lockForUpdate()
                 ->first();
 
             if (!$reservation) {
@@ -519,6 +569,15 @@ class ReceptionistController extends Controller
 
             $invoice->save();
 
+            // Once the invoice is fully paid, move the reservation out of
+            // 'pending' the same way the guest-side simulate() flow does.
+            // Without this, front-desk-paid reservations could never reach
+            // 'confirmed' and would be permanently blocked from check-in.
+            if ($invoice->status === 'paid' && $reservation->status === 'pending') {
+                $reservation->status = 'confirmed';
+                $reservation->save();
+            }
+
             $remainingAmountAfterPayment = max(
                 0,
                 (float) $invoice->total_amount - (float) $totalPaid
@@ -531,6 +590,7 @@ class ReceptionistController extends Controller
                     'invoice_id' => $payment->invoice_id,
                     'reservation_id' => $reservation->id,
                     'booking_reference' => $reservation->booking_reference,
+                    'reservation_status' => $reservation->status,
 
                     'amount' => number_format(
                         (float) $payment->amount,
