@@ -1,0 +1,68 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+.card {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-gray-100);
+  padding-bottom: var(--space-3);
+}
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-gray-100);
+}
+.detailRow:last-child {
+  border-bottom: none;
+}
+.label {
+  color: var(--color-gray-600);
+  font-size: 14px;
+}
+.value {
+  color: var(--color-black);
+  font-weight: 500;
+  font-size: 14px;
+  text-align: right;
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.modalContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.backLink {
+  color: var(--color-gray-600);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  margin-bottom: var(--space-4);
+}
+.backLink:hover {
+  color: var(--color-black);
+}
