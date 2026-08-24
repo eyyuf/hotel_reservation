@@ -1,0 +1,88 @@
+.page {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-gray-600);
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: var(--space-6);
+}
+
+.backLink:hover {
+  color: var(--color-black);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.badgeWrapper {
+  margin-top: var(--space-2);
+}
+
+.card {
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-gray-200);
+  padding: var(--space-6);
+  margin-top: var(--space-4);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.detailGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.detailGroup label, .specialRequests label {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--color-gray-500);
+  letter-spacing: 0.5px;
+}
+
+.detailGroup p, .specialRequests p {
+  font-size: 16px;
+  color: var(--color-black);
+}
+
+.amount {
+  font-weight: 600;
+}
+
+.specialRequests {
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-gray-100);
+}
+
+.actions {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-gray-100);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.skeletonGrid {
+  margin-top: var(--space-6);
+}
