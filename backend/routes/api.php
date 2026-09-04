@@ -2,11 +2,13 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\GuestReservationController;
+use App\Http\Controllers\Api\V1\HotelImageController;
 use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\ManagerController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\PublicHotelController;
 use App\Http\Controllers\Api\V1\ReceptionistController;
+use App\Http\Controllers\Api\V1\RoomTypeImageController;
 use App\Http\Controllers\Api\V1\SuperAdminController;
 use Illuminate\Support\Facades\Route;
 
@@ -95,6 +97,18 @@ Route::prefix('v1/manager')
         Route::get('invoices/{invoice}', [InvoiceController::class, 'managerShow']);
 
         Route::get('reports', [ManagerController::class, 'reports']);
+
+        // Hotel images
+        Route::get('hotel/images', [HotelImageController::class, 'index']);
+        Route::post('hotel/images', [HotelImageController::class, 'store']);
+        Route::patch('hotel/images/{image}', [HotelImageController::class, 'update']);
+        Route::delete('hotel/images/{image}', [HotelImageController::class, 'destroy']);
+
+        // Room type images
+        Route::get('room-types/{roomType}/images', [RoomTypeImageController::class, 'index']);
+        Route::post('room-types/{roomType}/images', [RoomTypeImageController::class, 'store']);
+        Route::patch('room-type-images/{image}', [RoomTypeImageController::class, 'update']);
+        Route::delete('room-type-images/{image}', [RoomTypeImageController::class, 'destroy']);
     });
 
 /*

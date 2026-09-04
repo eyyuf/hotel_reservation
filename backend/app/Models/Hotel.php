@@ -31,4 +31,9 @@ class Hotel extends Model
     {
         return $this->hasMany(AuditLog::class);
     }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(HotelImage::class);
+    }
 }
