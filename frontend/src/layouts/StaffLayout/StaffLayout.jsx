@@ -64,7 +64,13 @@ function StaffLayout() {
       {/* Mobile Top Header */}
       <header className={styles.mobileHeader}>
         <div className={styles.mobileHeaderContent}>
-          <div className={styles.mobileLogo}>HotelHub</div>
+          <div className={styles.mobileLogo}>
+            <img
+              src="/ADAR_Logo_Assets/out/dark/adar_logo_dark_horizontal.svg"
+              alt="ADAR - book form anywhere"
+              className={styles.mobileLogoImg}
+            />
+          </div>
           <button 
             className={styles.mobileMenuButton} 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -87,7 +93,11 @@ function StaffLayout() {
       <aside className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.sidebarHeader}>
           <div className={styles.brandRow}>
-            <span className={styles.logo}>HotelHub</span>
+            <img
+              src="/ADAR_Logo_Assets/out/dark/adar_logo_dark_horizontal.svg"
+              alt="ADAR - book form anywhere"
+              className={styles.sidebarLogoImg}
+            />
           </div>
           <div className={styles.roleBadge}>{formatRole(user?.role)}</div>
         </div>

@@ -27,10 +27,15 @@
 }
 
 .mobileLogo {
-  font-size: var(--text-lg);
-  font-weight: var(--weight-bold);
-  color: var(--color-black);
-  letter-spacing: -0.03em;
+  display: flex;
+  align-items: center;
+}
+
+.mobileLogoImg {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
 
 .mobileMenuButton {
@@ -82,6 +87,13 @@
   display: flex;
   align-items: center;
   margin-bottom: var(--space-2);
+}
+
+.sidebarLogoImg {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
 
 .logo {

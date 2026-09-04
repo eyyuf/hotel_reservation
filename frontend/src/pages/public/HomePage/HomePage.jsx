@@ -146,7 +146,7 @@ const HomePage = () => {
               you'll love to stay.
             </h1>
             <p className={styles.heroSubtitle}>
-              Discover comfortable stays across Ethiopia and book your next trip with
+              Discover comfortable stays across Ethiopia and book form anywhere with
               confidence.
             </p>
           </div>
@@ -328,12 +328,12 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* ── Why HotelHub ── */}
+      {/* ── Why ADAR ── */}
       <section id="why-us" className={styles.whySection}>
         <div className={styles.whyContainer}>
           <div className={styles.whyHeader}>
-            <p className={styles.sectionPretitleAmber}>Why HotelHub</p>
-            <h2 className={styles.sectionTitleWhite}>A better way to book your stay.</h2>
+            <p className={styles.sectionPretitleAmber}>Why ADAR</p>
+            <h2 className={styles.sectionTitleWhite}>A better way to book form anywhere.</h2>
           </div>
 
           <div className={styles.whyGrid}>

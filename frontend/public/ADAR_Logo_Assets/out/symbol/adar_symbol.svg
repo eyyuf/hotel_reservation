@@ -1,0 +1,15 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- ADAR map-pin + house symbol (true vector). House is a real cutout (transparent),
+       matching the original mark: whatever sits behind the logo shows through. -->
+  <defs>
+    <mask id="house-cutout" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <rect x="0" y="0" width="512" height="512" fill="#fff"/>
+      <g fill="none" stroke="#000" stroke-width="16" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M195 205l61-52 61 52"/>
+        <path d="M207 193v72h98v-72"/>
+        <path d="M283 138v22"/>
+      </g>
+    </mask>
+  </defs>
+  <path mask="url(#house-cutout)" fill="#1E1E1E" d="M256 40c-79.5 0-144 64.1-144 143.1 0 107.3 144 288.9 144 288.9s144-181.6 144-288.9C400 104.1 335.5 40 256 40z"/>
+</svg>

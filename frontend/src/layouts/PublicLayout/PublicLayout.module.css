@@ -33,6 +33,18 @@
   align-items: center;
   gap: 0.5rem;
   text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.brand:hover {
+  opacity: 0.9;
+}
+
+.brandLogoImg {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
 
 .brandIcon {

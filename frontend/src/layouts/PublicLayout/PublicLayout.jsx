@@ -33,23 +33,12 @@ function PublicLayout() {
       <header className={styles.header}>
         <div className={styles.navContainer}>
           {/* Brand */}
-          <Link to="/" className={styles.brand} onClick={closeMenu}>
-            <span className={styles.brandIcon}>
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-            </span>
-            <span className={styles.brandText}>HotelHub</span>
+          <Link to="/" className={styles.brand} onClick={closeMenu} aria-label="ADAR - book form anywhere">
+            <img
+              src="/ADAR_Logo_Assets/out/dark/adar_logo_dark_horizontal.svg"
+              alt="ADAR - book form anywhere"
+              className={styles.brandLogoImg}
+            />
           </Link>
 
           {/* Desktop Nav Links */}
@@ -191,27 +180,16 @@ function PublicLayout() {
           <div className={styles.footerGrid}>
             {/* Brand column */}
             <div>
-              <Link to="/" className={styles.brand}>
-                <span className={styles.brandIcon}>
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                    <polyline points="9 22 9 12 15 12 15 22" />
-                  </svg>
-                </span>
-                <span className={styles.brandText}>HotelHub</span>
+              <Link to="/" className={styles.brand} aria-label="ADAR - book form anywhere">
+                <img
+                  src="/ADAR_Logo_Assets/out/dark/adar_logo_dark_horizontal.svg"
+                  alt="ADAR - book form anywhere"
+                  className={styles.brandLogoImg}
+                />
               </Link>
               <p className={styles.footerBrandDesc}>
-                Discover and book comfortable stays across Ethiopia. Simple, trustworthy,
-                built for travelers.
+                Discover and book comfortable stays across Ethiopia with ADAR.
+                Simple, trustworthy, and built for travelers — book form anywhere.
               </p>
             </div>
 
@@ -268,7 +246,7 @@ function PublicLayout() {
                   ) : (
                     <li>
                       <Link to={getDashboardPath()} className={styles.footerLink}>
-                        Staff Portal
+                        Staff Dashboard
                       </Link>
                     </li>
                   )
@@ -292,10 +270,10 @@ function PublicLayout() {
 
           <div className={styles.footerBottom}>
             <p className={styles.footerSubtext}>
-              © 2026 HotelHub. All rights reserved.
+              © {new Date().getFullYear()} ADAR. All rights reserved.
             </p>
             <p className={styles.footerSubtext}>
-              Made for travelers across Ethiopia
+              book form anywhere
             </p>
           </div>
         </div>

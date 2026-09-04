@@ -15,7 +15,13 @@ function GuestLayout() {
       {/* Top Navbar */}
       <header className={styles.header}>
         <div className={styles.navContainer}>
-          <Link to="/guest/dashboard" className={styles.logo}>HotelHub</Link>
+          <Link to="/guest/dashboard" className={styles.logo} aria-label="ADAR - book form anywhere">
+            <img
+              src="/ADAR_Logo_Assets/out/dark/adar_logo_dark_horizontal.svg"
+              alt="ADAR - book form anywhere"
+              className={styles.logoImg}
+            />
+          </Link>
           
           <button className={styles.mobileMenuBtn} onClick={toggleMenu} aria-label="Toggle menu">
             {isMenuOpen ? <X size={22} /> : <Menu size={22} />}

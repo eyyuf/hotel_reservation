@@ -85,21 +85,12 @@ function LoginPage() {
 
         {/* Brand mark */}
         <div className={styles.visualBrand}>
-          <Link to="/" className={styles.brandLink}>
-            <div className={styles.brandIcon} aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 21h18" />
-                <path d="M19 21v-4" />
-                <path d="M19 13V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16" />
-                <path d="M9 7h1" />
-                <path d="M14 7h1" />
-                <path d="M9 11h1" />
-                <path d="M14 11h1" />
-                <path d="M9 15h1" />
-                <path d="M14 15h1" />
-              </svg>
-            </div>
-            <span className={styles.brandText}>HotelHub</span>
+          <Link to="/" className={styles.brandLink} aria-label="ADAR - book form anywhere">
+            <img
+              src="/ADAR_Logo_Assets/out/light/adar_logo_light_horizontal.svg"
+              alt="ADAR - book form anywhere"
+              className={styles.brandLogoImgWhite}
+            />
           </Link>
         </div>
 
@@ -108,7 +99,7 @@ function LoginPage() {
           <blockquote className={styles.quote}>
             &ldquo;Every stay is a story worth telling.&rdquo;
           </blockquote>
-          <p className={styles.trustText}>Trusted by thousands of guests worldwide</p>
+          <p className={styles.trustText}>Trusted by thousands of guests worldwide · book form anywhere</p>
           <div className={styles.stars} aria-label="5 star rating">
             {[...Array(5)].map((_, i) => (
               <svg key={i} width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -122,21 +113,12 @@ function LoginPage() {
       {/* Right panel — authentication form */}
       <div className={styles.formPanel}>
         {/* Mobile brand header */}
-        <Link to="/" className={styles.mobileBrand}>
-          <div className={styles.mobileBrandIcon} aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 21h18" />
-              <path d="M19 21v-4" />
-              <path d="M19 13V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16" />
-              <path d="M9 7h1" />
-              <path d="M14 7h1" />
-              <path d="M9 11h1" />
-              <path d="M14 11h1" />
-              <path d="M9 15h1" />
-              <path d="M14 15h1" />
-            </svg>
-          </div>
-          <span className={styles.mobileBrandText}>HotelHub</span>
+        <Link to="/" className={styles.mobileBrand} aria-label="ADAR - book form anywhere">
+          <img
+            src="/ADAR_Logo_Assets/out/dark/adar_logo_dark_horizontal.svg"
+            alt="ADAR - book form anywhere"
+            className={styles.mobileBrandLogoImg}
+          />
         </Link>
 
         <div className={styles.formContainer}>
