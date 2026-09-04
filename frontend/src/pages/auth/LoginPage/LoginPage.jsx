@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
+import Input from '../../../components/ui/Input/Input';
+import Button from '../../../components/ui/Button/Button';
 import styles from './LoginPage.module.css';
 
 function LoginPage() {
@@ -56,39 +58,34 @@ function LoginPage() {
       {error && <div className={styles.error}>{error}</div>}
 
       <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.formGroup}>
-          <label htmlFor="email" className={styles.label}>Email</label>
-          <input
-            id="email"
-            type="email"
-            className={styles.input}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-        </div>
+        <Input
+          id="email"
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoComplete="email"
+        />
         
-        <div className={styles.formGroup}>
-          <label htmlFor="password" className={styles.label}>Password</label>
-          <input
-            id="password"
-            type="password"
-            className={styles.input}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
-        </div>
+        <Input
+          id="password"
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete="current-password"
+        />
 
-        <button 
+        <Button 
           type="submit" 
-          className={styles.button}
-          disabled={isSubmitting}
+          variant="primary"
+          fullWidth
+          isLoading={isSubmitting}
         >
-          {isSubmitting ? 'Signing in...' : 'Sign in'}
-        </button>
+          Sign in
+        </Button>
       </form>
       
       <div className={styles.footer}>
@@ -101,3 +98,4 @@ function LoginPage() {
 }
 
 export default LoginPage;
+

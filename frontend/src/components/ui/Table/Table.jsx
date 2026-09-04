@@ -1,13 +1,31 @@
 import React from 'react';
 import styles from './Table.module.css';
 
-const Table = ({ columns = [], data = [], emptyMessage = 'No data available' }) => {
-  if (!data || data.length === 0) {
-    return <div className={styles.emptyState}>{emptyMessage}</div>;
+const Table = ({
+  columns = [],
+  data = [],
+  emptyMessage = 'No data available',
+  isLoading = false,
+  children,
+  className = '',
+  ...props
+}) => {
+  if (children) {
+    return (
+      <div className={`${styles.tableContainer} ${className}`} {...props}>
+        <table className={styles.table}>
+          {children}
+        </table>
+      </div>
+    );
+  }
+
+  if (!isLoading && (!data || data.length === 0)) {
+    return <div className={`${styles.emptyState} ${className}`}>{emptyMessage}</div>;
   }
 
   return (
-    <div className={styles.tableContainer}>
+    <div className={`${styles.tableContainer} ${className}`} {...props}>
       <table className={styles.table}>
         <thead>
           <tr>

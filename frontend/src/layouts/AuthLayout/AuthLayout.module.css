@@ -3,16 +3,17 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: var(--color-gray-100);
-  padding: var(--space-4);
+  background-color: var(--color-gray-50);
+  padding: var(--space-6) var(--space-4);
 }
 
 .card {
   width: 100%;
   max-width: 440px;
   background-color: var(--color-white);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
   padding: var(--space-8);
 }
 
@@ -21,9 +22,27 @@
   margin-bottom: var(--space-6);
 }
 
+.logoLink {
+  text-decoration: none;
+  display: inline-block;
+}
+
+.logoLink:hover .logo {
+  opacity: 0.85;
+}
+
 .logo {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
   color: var(--color-black);
+  letter-spacing: -0.03em;
   margin: 0;
+  display: block;
+}
+
+.tagline {
+  font-size: var(--text-xs);
+  color: var(--color-gray-500);
+  margin-top: var(--space-1);
+  letter-spacing: 0.02em;
 }

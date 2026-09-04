@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
+import Input from '../../../components/ui/Input/Input';
+import Button from '../../../components/ui/Button/Button';
 import styles from './RegisterPage.module.css';
 
 function RegisterPage() {
@@ -59,95 +61,78 @@ function RegisterPage() {
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label htmlFor="first_name" className={styles.label}>First Name</label>
-            <input
-              id="first_name"
-              name="first_name"
-              type="text"
-              className={styles.input}
-              value={formData.first_name}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          <Input
+            id="first_name"
+            name="first_name"
+            label="First Name"
+            type="text"
+            value={formData.first_name}
+            onChange={handleChange}
+            required
+          />
           
-          <div className={styles.formGroup}>
-            <label htmlFor="last_name" className={styles.label}>Last Name</label>
-            <input
-              id="last_name"
-              name="last_name"
-              type="text"
-              className={styles.input}
-              value={formData.last_name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label htmlFor="email" className={styles.label}>Email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            className={styles.input}
-            value={formData.email}
+          <Input
+            id="last_name"
+            name="last_name"
+            label="Last Name"
+            type="text"
+            value={formData.last_name}
             onChange={handleChange}
             required
-            autoComplete="email"
           />
         </div>
+
+        <Input
+          id="email"
+          name="email"
+          label="Email"
+          type="email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+          autoComplete="email"
+        />
         
-        <div className={styles.formGroup}>
-          <label htmlFor="phone" className={styles.label}>Phone (Optional)</label>
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            className={styles.input}
-            value={formData.phone}
-            onChange={handleChange}
-          />
-        </div>
+        <Input
+          id="phone"
+          name="phone"
+          label="Phone (Optional)"
+          type="tel"
+          value={formData.phone}
+          onChange={handleChange}
+        />
 
-        <div className={styles.formGroup}>
-          <label htmlFor="password" className={styles.label}>Password</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            className={styles.input}
-            value={formData.password}
-            onChange={handleChange}
-            required
-            autoComplete="new-password"
-          />
-          <span className={styles.helpText}>Minimum 8 characters</span>
-        </div>
+        <Input
+          id="password"
+          name="password"
+          label="Password"
+          type="password"
+          value={formData.password}
+          onChange={handleChange}
+          helperText="Minimum 8 characters"
+          required
+          autoComplete="new-password"
+        />
         
-        <div className={styles.formGroup}>
-          <label htmlFor="password_confirmation" className={styles.label}>Confirm Password</label>
-          <input
-            id="password_confirmation"
-            name="password_confirmation"
-            type="password"
-            className={styles.input}
-            value={formData.password_confirmation}
-            onChange={handleChange}
-            required
-            autoComplete="new-password"
-          />
-        </div>
+        <Input
+          id="password_confirmation"
+          name="password_confirmation"
+          label="Confirm Password"
+          type="password"
+          value={formData.password_confirmation}
+          onChange={handleChange}
+          required
+          autoComplete="new-password"
+        />
 
-        <button 
+        <Button 
           type="submit" 
-          className={styles.button}
-          disabled={isSubmitting}
+          variant="primary"
+          fullWidth
+          isLoading={isSubmitting}
         >
-          {isSubmitting ? 'Creating account...' : 'Create account'}
-        </button>
+          Create account
+        </Button>
       </form>
       
       <div className={styles.footer}>

@@ -10,6 +10,17 @@ function PublicLayout() {
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
+  const getDashboardPath = () => {
+    if (!user) return '/';
+    switch (user.role) {
+      case 'guest': return '/guest/dashboard';
+      case 'receptionist': return '/receptionist/dashboard';
+      case 'hotel_manager': return '/admin/dashboard';
+      case 'super_admin': return '/super-admin/dashboard';
+      default: return '/';
+    }
+  };
+
   return (
     <div className={styles.layout}>
       <header className={styles.header}>
@@ -17,19 +28,26 @@ function PublicLayout() {
           <Link to="/" className={styles.logo}>HotelHub</Link>
           
           <button className={styles.mobileMenuBtn} onClick={toggleMenu} aria-label="Toggle menu">
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
           <nav className={`${styles.navLinks} ${isMenuOpen ? styles.navLinksOpen : ''}`}>
             <Link to="/hotels" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Hotels</Link>
             
-            {isAuthenticated && user?.role === 'guest' ? (
-              <>
-                <Link to="/guest/reservations" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>My Reservations</Link>
-                <Link to="/guest/profile" className={styles.profileBtn} onClick={() => setIsMenuOpen(false)}>
-                  <User size={20} />
+            {isAuthenticated ? (
+              user?.role === 'guest' ? (
+                <>
+                  <Link to="/guest/reservations" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>My Reservations</Link>
+                  <Link to="/guest/dashboard" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
+                  <Link to="/guest/profile" className={styles.profileBtn} onClick={() => setIsMenuOpen(false)} aria-label="Profile">
+                    <User size={18} />
+                  </Link>
+                </>
+              ) : (
+                <Link to={getDashboardPath()} className={styles.registerBtn} onClick={() => setIsMenuOpen(false)}>
+                  Staff Dashboard
                 </Link>
-              </>
+              )
             ) : (
               <>
                 <Link to="/login" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Sign In</Link>
@@ -45,7 +63,9 @@ function PublicLayout() {
       </main>
 
       <footer className={styles.footer}>
-        <p>© 2026 HotelHub. All rights reserved.</p>
+        <div className={styles.footerContainer}>
+          <p className={styles.footerCopy}>© 2026 HotelHub. All rights reserved.</p>
+        </div>
       </footer>
     </div>
   );

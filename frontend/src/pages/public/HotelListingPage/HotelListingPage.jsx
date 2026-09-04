@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Building, MapPin, Calendar, Users, Star } from 'lucide-react';
+import { Building, MapPin, Calendar, Users, Star, Search } from 'lucide-react';
 import { hotelApi } from '../../../services/hotels/hotelApi';
-import { formatCurrency } from '../../../utils/formatCurrency';
 import Input from '../../../components/ui/Input/Input';
 import Button from '../../../components/ui/Button/Button';
 import Select from '../../../components/ui/Select/Select';
@@ -26,11 +25,7 @@ const HotelListingPage = () => {
   const guests = searchParams.get('guests') || 1;
   const page = parseInt(searchParams.get('page')) || 1;
 
-  useEffect(() => {
-    fetchHotels();
-  }, [city, page]);
-
-  const fetchHotels = async () => {
+  const fetchHotels = useCallback(async () => {
     setLoading(true);
     try {
       const response = await hotelApi.getHotels({ city, page, per_page: 9 });
@@ -48,18 +43,28 @@ const HotelListingPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [city, page]);
+
+  useEffect(() => {
+    fetchHotels();
+  }, [fetchHotels]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    setSearchParams({
-      city: formData.get('city'),
-      check_in: formData.get('check_in'),
-      check_out: formData.get('check_out'),
-      guests: formData.get('guests'),
-      page: '1'
-    });
+    const params = new URLSearchParams();
+    const c = formData.get('city');
+    const ci = formData.get('check_in');
+    const co = formData.get('check_out');
+    const g = formData.get('guests');
+
+    if (c) params.set('city', c);
+    if (ci) params.set('check_in', ci);
+    if (co) params.set('check_out', co);
+    if (g) params.set('guests', g);
+    params.set('page', '1');
+
+    setSearchParams(params);
   };
 
   const handleSortChange = (e) => {
@@ -67,8 +72,7 @@ const HotelListingPage = () => {
   };
 
   const sortedHotels = [...hotels].sort((a, b) => {
-    if (sortOrder === 'name') return a.name.localeCompare(b.name);
-    // Add other sorts if API includes prices in listing
+    if (sortOrder === 'name') return (a.name || '').localeCompare(b.name || '');
     return 0;
   });
 
@@ -79,39 +83,45 @@ const HotelListingPage = () => {
           <form onSubmit={handleSearch} className={styles.searchBar}>
             <Input
               name="city"
-              icon={<MapPin size={18} />}
+              icon={<MapPin size={16} />}
               defaultValue={city}
-              placeholder="Destination"
+              placeholder="Destination (e.g. Addis Ababa)"
             />
             <Input
               name="check_in"
               type="date"
-              icon={<Calendar size={18} />}
+              icon={<Calendar size={16} />}
               defaultValue={checkIn}
             />
             <Input
               name="check_out"
               type="date"
-              icon={<Calendar size={18} />}
+              icon={<Calendar size={16} />}
               defaultValue={checkOut}
             />
             <Input
               name="guests"
               type="number"
               min="1"
-              icon={<Users size={18} />}
+              icon={<Users size={16} />}
               defaultValue={guests}
             />
-            <Button type="submit" variant="primary">Search</Button>
+            <Button type="submit" variant="primary">
+              <Search size={16} />
+              <span>Search</span>
+            </Button>
           </form>
         </div>
       </div>
 
       <div className={styles.container}>
         <div className={styles.header}>
-          <h1 className={styles.title}>
-            {loading ? 'Searching hotels...' : `${hotels.length} hotels found`}
-          </h1>
+          <div className={styles.titleArea}>
+            <h1 className={styles.title}>
+              {loading ? 'Searching hotels...' : `${hotels.length} ${hotels.length === 1 ? 'hotel' : 'hotels'} available`}
+            </h1>
+            {city && <span className={styles.filterTag}>Destination: {city}</span>}
+          </div>
           <div className={styles.sort}>
             <Select 
               options={[
@@ -127,11 +137,11 @@ const HotelListingPage = () => {
           <div className={styles.grid}>
             {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} className={styles.skeletonCard}>
-                <Skeleton height="200px" />
+                <Skeleton height="180px" />
                 <div className={styles.skeletonBody}>
-                  <Skeleton width="70%" />
-                  <Skeleton width="40%" />
-                  <Skeleton width="100%" height="40px" />
+                  <Skeleton width="70%" height="20px" />
+                  <Skeleton width="40%" height="16px" />
+                  <Skeleton width="100%" height="36px" />
                 </div>
               </div>
             ))}
@@ -140,28 +150,29 @@ const HotelListingPage = () => {
           <>
             <div className={styles.grid}>
               {sortedHotels.map(hotel => (
-                <div key={hotel.id} className={styles.card}>
+                <div key={hotel.id || hotel.hotel_id} className={styles.card}>
                   <div className={styles.cardImage}>
-                    <Building size={40} className={styles.placeholderIcon} />
+                    <Building size={36} className={styles.placeholderIcon} />
                   </div>
                   <div className={styles.cardBody}>
                     <h3 className={styles.cardTitle}>{hotel.name}</h3>
                     <div className={styles.cardLocation}>
                       <MapPin size={14} />
-                      <span>{hotel.city}</span>
+                      <span>{hotel.city}{hotel.country ? `, ${hotel.country}` : ''}</span>
                     </div>
                     <div className={styles.cardRating}>
                       {[1, 2, 3, 4, 5].map(star => (
-                        <Star key={star} size={14} className={styles.star} fill="currentColor" />
+                        <Star key={star} size={13} className={styles.star} fill="currentColor" />
                       ))}
                     </div>
                     <div className={styles.cardFooter}>
                       <div className={styles.price}>
-                        <span>Price varies</span>
+                        <span>Standard rates apply</span>
                       </div>
                       <Button 
                         variant="secondary"
-                        onClick={() => navigate(`/hotels/${hotel.id}?check_in=${checkIn}&check_out=${checkOut}&guests=${guests}`)}
+                        size="sm"
+                        onClick={() => navigate(`/hotels/${hotel.id || hotel.hotel_id}?check_in=${checkIn}&check_out=${checkOut}&guests=${guests}`)}
                       >
                         View rooms
                       </Button>
@@ -184,7 +195,7 @@ const HotelListingPage = () => {
           <EmptyState 
             icon={Building}
             title="No hotels found"
-            message="Try adjusting your search criteria."
+            description="Try adjusting your destination city or search criteria."
           />
         )}
       </div>

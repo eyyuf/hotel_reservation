@@ -4,39 +4,44 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  animation: fadeIn var(--transition-slow) ease;
+  z-index: var(--z-modal);
+  padding: var(--space-4);
+  animation: fadeIn var(--transition-fast) ease;
 }
 
 .modal {
   background-color: var(--color-white);
-  border-radius: var(--radius-md);
-  width: 90%;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  width: 100%;
   max-width: 500px;
-  max-height: 90vh;
+  max-height: 88vh;
   display: flex;
   flex-direction: column;
-  box-shadow: var(--shadow-lg);
-  animation: slideUp var(--transition-slow) ease;
+  box-shadow: var(--shadow-xl);
+  animation: slideUp var(--transition-base) ease;
+  overflow: hidden;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-4) var(--space-6);
-  border-bottom: 1px solid var(--color-gray-200);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--color-white);
 }
 
 .title {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-black);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-gray-900);
 }
 
 .closeBtn {
@@ -44,34 +49,39 @@
   border: none;
   cursor: pointer;
   color: var(--color-gray-500);
-  padding: var(--space-1);
+  padding: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-sm);
-  transition: background-color var(--transition-fast);
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 .closeBtn:hover {
   background-color: var(--color-gray-100);
-  color: var(--color-black);
+  color: var(--color-gray-900);
 }
 
 .closeBtn:focus-visible {
-  outline: 2px solid var(--color-black);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-black);
 }
 
 .body {
-  padding: var(--space-6);
+  padding: var(--space-5);
   overflow-y: auto;
+  font-size: var(--text-base);
+  color: var(--color-gray-700);
 }
 
 .footer {
-  padding: var(--space-4) var(--space-6);
-  border-top: 1px solid var(--color-gray-200);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--border-color);
+  background-color: var(--color-gray-50);
   display: flex;
   justify-content: flex-end;
-  gap: var(--space-4);
+  align-items: center;
+  gap: var(--space-3);
 }
 
 @keyframes fadeIn {
@@ -80,6 +90,6 @@
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
