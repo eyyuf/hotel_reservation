@@ -27,9 +27,10 @@
 }
 
 .title {
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
   font-size: 32px;
   font-weight: 700;
-  color: var(--color-black);
+  color: var(--color-navy, #0f172a);
   margin-bottom: var(--space-2);
 }
 
@@ -39,6 +40,10 @@
   gap: var(--space-2);
   color: var(--color-gray-600);
   font-size: 16px;
+}
+
+.heroGallery {
+  margin-bottom: var(--space-8);
 }
 
 .hero {
@@ -64,10 +69,11 @@
 }
 
 .sectionTitle {
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
   font-size: 24px;
   font-weight: 600;
   margin-bottom: var(--space-4);
-  color: var(--color-black);
+  color: var(--color-navy, #0f172a);
 }
 
 .description {
@@ -111,13 +117,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
 }
 
 @media (min-width: 768px) {
   .roomImage {
     width: 250px;
     height: auto;
+    min-height: 180px;
   }
+}
+
+.roomPhotoBadge {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  background: rgba(15, 23, 42, 0.75);
+  color: #ffffff;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .roomInfo {
@@ -128,8 +153,10 @@
 }
 
 .roomTitle {
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
   font-size: 20px;
   font-weight: 600;
+  color: var(--color-navy, #0f172a);
   margin-bottom: var(--space-2);
 }
 

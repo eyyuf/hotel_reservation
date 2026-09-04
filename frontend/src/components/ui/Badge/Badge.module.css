@@ -2,34 +2,43 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 3px 8px;
+  font-size: 11.5px;
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
   border-radius: var(--radius-sm);
   white-space: nowrap;
+  line-height: 1.2;
+  border: 1px solid transparent;
 }
 
 .success {
   background-color: var(--color-success-bg);
   color: var(--color-success);
+  border-color: var(--color-success-border);
 }
 
 .warning {
   background-color: var(--color-warning-bg);
   color: var(--color-warning);
+  border-color: var(--color-warning-border);
 }
 
 .error {
   background-color: var(--color-error-bg);
   color: var(--color-error);
+  border-color: var(--color-error-border);
 }
 
 .info {
   background-color: var(--color-info-bg);
   color: var(--color-info);
+  border-color: var(--color-info-border);
 }
 
 .neutral {
   background-color: var(--color-gray-100);
   color: var(--color-gray-700);
+  border-color: var(--color-gray-200);
 }

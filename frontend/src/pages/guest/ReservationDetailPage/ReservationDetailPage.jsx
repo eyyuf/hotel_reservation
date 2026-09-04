@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { reservationApi } from '../../../services/reservations/reservationApi';
 import { enrichReservation } from '../../../utils/enrichReservation';
@@ -15,67 +15,75 @@ import styles from './ReservationDetailPage.module.css';
 const ReservationDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast } = useToast();
+  const hasLoggedDevRef = useRef(false);
+
+  // Reuse reservation data passed from parent/list if available for instant display
+  const passedReservation = location.state?.reservation;
+  const initialReservation = (passedReservation && (String(passedReservation.reservation_id) === String(id) || String(passedReservation.id) === String(id)))
+    ? passedReservation
+    : null;
   
-  const [reservation, setReservation] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [reservation, setReservation] = useState(initialReservation);
+  const [loading, setLoading] = useState(!initialReservation);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 
-  useEffect(() => {
-    const loadReservation = async () => {
-      try {
-        const response = await reservationApi.getReservation(id);
-        const reservationDetails = response.data.data;
-        setReservation(await enrichReservation(reservationDetails));
-
-        if (import.meta.env.DEV) {
-          const [invoiceResult, paymentsResult] = await Promise.allSettled([
-            reservationApi.getInvoice(id),
-            reservationApi.getPayments(id),
-          ]);
-          const invoice = invoiceResult.status === 'fulfilled' ? invoiceResult.value.data?.data : null;
-          const paymentIds = paymentsResult.status === 'fulfilled'
-            ? (paymentsResult.value.data?.data?.payments ?? [])
-              .map((payment) => payment.payment_id)
-              .filter(Boolean)
-            : [];
-
-          void fetch('/__dev/reservation-log', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              reservation_id: reservationDetails.reservation_id,
-              hotel_id: reservationDetails.hotel_id,
-              room_type_id: reservationDetails.room_type_id,
-              invoice_id: invoice?.id ?? null,
-              payment_ids: paymentIds,
-              sanctum_token: localStorage.getItem('auth_token'),
-            }),
-          }).catch(() => {});
-        }
-      } catch (error) {
-        showToast('Failed to load reservation details.', 'error');
-        navigate('/guest/reservations');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadReservation();
-  }, [id, navigate, showToast]);
-
-  const fetchReservation = async () => {
+  const fetchReservation = useCallback(async (isMounted = true) => {
     try {
       const response = await reservationApi.getReservation(id);
-      setReservation(await enrichReservation(response.data.data));
+      if (!isMounted) return;
+      const reservationDetails = response.data?.data ?? response.data;
+      const enriched = await enrichReservation(reservationDetails);
+      if (!isMounted) return;
+      setReservation(enriched);
+
+      if (import.meta.env.DEV && !hasLoggedDevRef.current) {
+        hasLoggedDevRef.current = true;
+        const [invoiceResult, paymentsResult] = await Promise.allSettled([
+          reservationApi.getInvoice(id),
+          reservationApi.getPayments(id),
+        ]);
+        const invoice = invoiceResult.status === 'fulfilled' ? invoiceResult.value.data?.data : null;
+        const paymentIds = paymentsResult.status === 'fulfilled'
+          ? (paymentsResult.value.data?.data?.payments ?? [])
+            .map((payment) => payment.payment_id)
+            .filter(Boolean)
+          : [];
+
+        void fetch('/__dev/reservation-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reservation_id: reservationDetails.reservation_id,
+            hotel_id: reservationDetails.hotel_id,
+            room_type_id: reservationDetails.room_type_id,
+            invoice_id: invoice?.id ?? null,
+            payment_ids: paymentIds,
+            sanctum_token: localStorage.getItem('auth_token'),
+          }),
+        }).catch(() => {});
+      }
     } catch (error) {
+      if (!isMounted) return;
       showToast('Failed to load reservation details.', 'error');
       navigate('/guest/reservations');
     } finally {
-      setLoading(false);
+      if (isMounted) {
+        setLoading(false);
+      }
     }
-  };
+  }, [id, navigate, showToast]);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchReservation(isMounted);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchReservation]);
 
   const handleCancel = async () => {
     setCancelling(true);

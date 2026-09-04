@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import React, { useState } from 'react';
+import { NavLink, Outlet, Link } from 'react-router-dom';
 import {
   LayoutDashboard,
   CalendarDays,
@@ -9,7 +10,9 @@ import {
   Settings,
   Building2,
   LogOut,
-  MoreHorizontal
+  Menu,
+  X,
+  Globe
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import styles from './StaffLayout.module.css';
@@ -38,22 +41,12 @@ const getNavItems = (role) => {
         { label: 'Dashboard', path: '/super-admin/dashboard', icon: LayoutDashboard },
         { label: 'Hotels', path: '/super-admin/hotels', icon: Building2 },
         { label: 'Administrators', path: '/super-admin/administrators', icon: Users },
-        { label: 'Reservations', path: '/super-admin/reservations', icon: CalendarDays },
         { label: 'Reports', path: '/super-admin/reports', icon: FileText },
         { label: 'Settings', path: '/super-admin/settings', icon: Settings },
       ];
     default:
       return [];
   }
-};
-
-const getMobileNavItems = (role) => {
-  const items = getNavItems(role);
-  // Just return the first 3 + a "More" placeholder for mobile bottom nav
-  return [
-    ...items.slice(0, 3),
-    { label: 'More', path: '#', icon: MoreHorizontal, isMore: true }
-  ];
 };
 
 const formatRole = (role) => {
@@ -63,16 +56,50 @@ const formatRole = (role) => {
 
 function StaffLayout() {
   const { user, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navItems = getNavItems(user?.role);
-  const mobileItems = getMobileNavItems(user?.role);
 
   return (
     <div className={styles.layout}>
-      {/* Desktop Sidebar */}
-      <aside className={styles.sidebar}>
+      {/* Mobile Top Header */}
+      <header className={styles.mobileHeader}>
+        <div className={styles.mobileHeaderContent}>
+          <div className={styles.mobileLogo}>
+            <img
+              src="/ADAR_Logo_Assets/out/dark/adar_logo_dark_horizontal.svg"
+              alt="ADAR - book form anywhere"
+              className={styles.mobileLogoImg}
+            />
+          </div>
+          <button 
+            className={styles.mobileMenuButton} 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
+      </header>
+
+      {/* Backdrop for mobile drawer */}
+      {mobileMenuOpen && (
+        <div 
+          className={styles.backdrop} 
+          onClick={() => setMobileMenuOpen(false)} 
+        />
+      )}
+
+      {/* Sidebar (Desktop & Mobile Drawer) */}
+      <aside className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.sidebarHeader}>
-          <div className={styles.logo}>HotelHub</div>
-          <div className={styles.roleLabel}>{formatRole(user?.role)}</div>
+          <div className={styles.brandRow}>
+            <img
+              src="/ADAR_Logo_Assets/out/dark/adar_logo_dark_horizontal.svg"
+              alt="ADAR - book form anywhere"
+              className={styles.sidebarLogoImg}
+            />
+          </div>
+          <div className={styles.roleBadge}>{formatRole(user?.role)}</div>
         </div>
 
         <nav className={styles.sidebarNav}>
@@ -82,59 +109,43 @@ function StaffLayout() {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) => 
                   isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem
                 }
               >
-                <Icon size={20} />
+                <Icon size={18} className={styles.navIcon} />
                 <span>{item.label}</span>
               </NavLink>
             );
           })}
+
+          <div className={styles.navDivider} />
+
+          <Link to="/hotels" className={styles.navItemSecondary} onClick={() => setMobileMenuOpen(false)}>
+            <Globe size={18} className={styles.navIcon} />
+            <span>View Public Site</span>
+          </Link>
         </nav>
 
         <div className={styles.sidebarFooter}>
           <div className={styles.userInfo}>
             <div className={styles.userName}>{user?.first_name} {user?.last_name}</div>
+            <div className={styles.userEmail}>{user?.email}</div>
           </div>
           <button className={styles.logoutBtn} onClick={logout}>
-            <LogOut size={20} />
-            <span>Logout</span>
+            <LogOut size={16} />
+            <span>Log out</span>
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <main className={styles.main}>
-        <Outlet />
+        <div className={styles.contentInner}>
+          <Outlet />
+        </div>
       </main>
-
-      {/* Mobile Bottom Navigation */}
-      <nav className={styles.bottomNav}>
-        {mobileItems.map((item, idx) => {
-          const Icon = item.icon;
-          if (item.isMore) {
-            return (
-              <div key="more" className={styles.bottomNavItem}>
-                <Icon size={24} />
-                <span>{item.label}</span>
-              </div>
-            );
-          }
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) => 
-                isActive ? `${styles.bottomNavItem} ${styles.bottomNavItemActive}` : styles.bottomNavItem
-              }
-            >
-              <Icon size={24} />
-              <span>{item.label}</span>
-            </NavLink>
-          );
-        })}
-      </nav>
     </div>
   );
 }

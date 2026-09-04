@@ -1,42 +1,70 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
   width: 100%;
 }
 
 .label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-black);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-gray-800);
+  line-height: var(--leading-tight);
 }
 
 .required {
   color: var(--color-error);
+  margin-left: 2px;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.iconWrapper {
+  position: absolute;
+  left: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-500);
+  pointer-events: none;
 }
 
 .input {
   width: 100%;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-gray-300);
+  padding: 10px var(--space-3);
+  border: 1px solid var(--border-color-dark);
   border-radius: var(--radius-md);
-  font-size: 16px;
+  font-size: var(--text-base);
   font-family: inherit;
-  color: var(--color-black);
+  color: var(--color-gray-900);
   background-color: var(--color-white);
-  transition: border-color var(--transition-fast) ease, outline var(--transition-fast) ease;
-  min-height: 44px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  min-height: 42px;
+}
+
+.input::placeholder {
+  color: var(--color-gray-400);
+}
+
+.input.hasIcon {
+  padding-left: calc(var(--space-3) + 24px);
 }
 
 .input:focus {
-  outline: 2px solid var(--color-black);
-  outline-offset: -1px;
-  border-color: transparent;
+  outline: none;
+  border-color: var(--color-black);
+  box-shadow: 0 0 0 1px var(--color-black);
 }
 
 .input:disabled {
   background-color: var(--color-gray-100);
   color: var(--color-gray-500);
+  border-color: var(--color-gray-200);
   cursor: not-allowed;
 }
 
@@ -45,20 +73,27 @@
 }
 
 .input.hasError:focus {
-  outline-color: var(--color-error);
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 1px var(--color-error);
 }
 
 .textarea {
-  min-height: 100px;
+  min-height: 96px;
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
   resize: vertical;
+  line-height: var(--leading-normal);
 }
 
 .errorText {
-  font-size: 14px;
+  font-size: var(--text-xs);
   color: var(--color-error);
+  font-weight: var(--weight-medium);
+  margin-top: 2px;
 }
 
 .helperText {
-  font-size: 14px;
+  font-size: var(--text-xs);
   color: var(--color-gray-500);
+  margin-top: 2px;
 }

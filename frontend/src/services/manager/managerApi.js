@@ -18,4 +18,23 @@ export const managerApi = {
   getInvoices: (params) => apiClient.get('/manager/invoices', { params }),
   getInvoice: (id) => apiClient.get(`/manager/invoices/${id}`),
   getReports: () => apiClient.get('/manager/reports'),
+  // Hotel images
+  getHotelImages: () => apiClient.get('/manager/hotel/images'),
+  uploadHotelImage: (formData, config = {}) =>
+    apiClient.post('/manager/hotel/images', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      ...config,
+    }),
+  updateHotelImage: (id, data) => apiClient.patch(`/manager/hotel/images/${id}`, data),
+  deleteHotelImage: (id) => apiClient.delete(`/manager/hotel/images/${id}`),
+
+  // Room type images
+  getRoomTypeImages: (roomTypeId) => apiClient.get(`/manager/room-types/${roomTypeId}/images`),
+  uploadRoomTypeImage: (roomTypeId, formData, config = {}) =>
+    apiClient.post(`/manager/room-types/${roomTypeId}/images`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      ...config,
+    }),
+  updateRoomTypeImage: (id, data) => apiClient.patch(`/manager/room-type-images/${id}`, data),
+  deleteRoomTypeImage: (id) => apiClient.delete(`/manager/room-type-images/${id}`),
 };
