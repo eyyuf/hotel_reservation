@@ -517,10 +517,10 @@ class ImageTestRunner
         // 18. Oversized image is rejected
         // ==========================================
         echo "\nTest 18: Oversized image is rejected\n";
-        // 6000 KB > 5120 KB limit
-        $bigFile = $this->makeFakeImage('huge.jpg', 6000);
+        // 1500 KB > 1024 KB limit
+        $bigFile = $this->makeFakeImage('huge.jpg', 1500);
         $res = $this->request('POST', '/api/v1/manager/hotel/images', [], ['image' => $bigFile], $this->tokenA);
-        $this->assert($res->getStatusCode() === 422, 'Oversized image (>5MB) rejected with 422');
+        $this->assert($res->getStatusCode() === 422, 'Oversized image (>1MB) rejected with 422');
 
         // ==========================================
         // 19. R2 upload failure is handled safely

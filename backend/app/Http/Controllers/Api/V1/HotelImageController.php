@@ -70,7 +70,7 @@ class HotelImageController extends Controller
         }
 
         $validated = $request->validate([
-            'image'       => ['required', 'file', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'image'       => ['required', 'file', 'image', 'mimes:jpeg,jpg,png,webp', 'max:1024'],
             'alt_text'    => ['nullable', 'string', 'max:255'],
             'is_primary'  => ['nullable', 'boolean'],
             'sort_order'  => ['nullable', 'integer', 'min:0'],
