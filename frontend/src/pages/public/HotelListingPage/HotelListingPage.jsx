@@ -140,78 +140,84 @@ const HotelListingPage = () => {
       {/* ── Search Bar Section ── */}
       <section className={styles.searchSection}>
         <div className={styles.container}>
-          <form onSubmit={handleSearch} className={styles.searchBar}>
-            {/* Destination */}
-            <div className={styles.fieldGroup}>
-              <label htmlFor="search-destination" className={styles.fieldLabel}>
-                Destination
-              </label>
-              <div className={styles.inputWrapper}>
-                <MapPin size={16} className={styles.inputIcon} />
+          <div className={styles.searchCard}>
+            <form onSubmit={handleSearch} className={styles.searchGrid}>
+              {/* Destination */}
+              <div className={styles.searchCol}>
+                <label htmlFor="search-destination" className={styles.fieldLabel}>
+                  <MapPin size={13} strokeWidth={2.2} />
+                  <span>Destination</span>
+                </label>
                 <input
                   id="search-destination"
                   type="text"
+                  placeholder="Where are you going?"
                   value={searchDestination}
                   onChange={(e) => setSearchDestination(e.target.value)}
-                  placeholder="e.g. Addis Ababa"
-                  className={styles.searchInput}
+                  className={styles.fieldInput}
                 />
               </div>
-            </div>
 
-            {/* Check-in */}
-            <div className={styles.fieldGroup}>
-              <label htmlFor="search-check-in" className={styles.fieldLabel}>
-                Check-in
-              </label>
-              <input
-                id="search-check-in"
-                type="date"
-                value={searchCheckIn}
-                onChange={(e) => setSearchCheckIn(e.target.value)}
-                className={styles.dateInput}
-              />
-            </div>
-
-            {/* Check-out */}
-            <div className={styles.fieldGroup}>
-              <label htmlFor="search-check-out" className={styles.fieldLabel}>
-                Check-out
-              </label>
-              <input
-                id="search-check-out"
-                type="date"
-                value={searchCheckOut}
-                onChange={(e) => setSearchCheckOut(e.target.value)}
-                className={styles.dateInput}
-              />
-            </div>
-
-            {/* Guests */}
-            <div className={styles.fieldGroup}>
-              <label htmlFor="search-guests" className={styles.fieldLabel}>
-                Guests
-              </label>
-              <div className={styles.inputWrapper}>
-                <Users size={16} className={styles.inputIcon} />
+              {/* Check-in */}
+              <div className={styles.searchCol}>
+                <label htmlFor="search-check-in" className={styles.fieldLabel}>
+                  <Calendar size={13} strokeWidth={2.2} />
+                  <span>Check-in</span>
+                </label>
                 <input
-                  id="search-guests"
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={searchGuests}
-                  onChange={(e) => setSearchGuests(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                  className={styles.searchInput}
+                  id="search-check-in"
+                  type="date"
+                  placeholder="Add dates"
+                  value={searchCheckIn}
+                  onChange={(e) => setSearchCheckIn(e.target.value)}
+                  className={styles.fieldInput}
                 />
               </div>
-            </div>
 
-            {/* Search button */}
-            <button type="submit" className={styles.searchButton}>
-              <Search size={16} />
-              <span>Search</span>
-            </button>
-          </form>
+              {/* Check-out */}
+              <div className={styles.searchCol}>
+                <label htmlFor="search-check-out" className={styles.fieldLabel}>
+                  <Calendar size={13} strokeWidth={2.2} />
+                  <span>Check-out</span>
+                </label>
+                <input
+                  id="search-check-out"
+                  type="date"
+                  placeholder="Add dates"
+                  value={searchCheckOut}
+                  onChange={(e) => setSearchCheckOut(e.target.value)}
+                  className={styles.fieldInput}
+                />
+              </div>
+
+              {/* Guests + Search Button */}
+              <div className={styles.searchColAction}>
+                <div className={styles.guestsField}>
+                  <label htmlFor="search-guests" className={styles.fieldLabel}>
+                    <Users size={13} strokeWidth={2.2} />
+                    <span>Guests</span>
+                  </label>
+                  <select
+                    id="search-guests"
+                    value={searchGuests}
+                    onChange={(e) => setSearchGuests(e.target.value)}
+                    className={styles.fieldSelect}
+                  >
+                    {[1, 2, 3, 4, 5, 6].map((n) => (
+                      <option key={n} value={n}>
+                        {n} {n === 1 ? 'guest' : 'guests'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button type="submit" className={styles.searchBtn}>
+                  <Search size={15} strokeWidth={2.4} />
+                  <span>Search</span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </section>
 
