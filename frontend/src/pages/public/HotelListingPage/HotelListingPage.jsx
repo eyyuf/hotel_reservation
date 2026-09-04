@@ -8,6 +8,8 @@ import Select from '../../../components/ui/Select/Select';
 import Skeleton from '../../../components/ui/Skeleton/Skeleton';
 import Pagination from '../../../components/ui/Pagination/Pagination';
 import EmptyState from '../../../components/ui/EmptyState/EmptyState';
+import ImageWithFallback from '../../../components/common/ImageWithFallback/ImageWithFallback';
+import { getPrimaryImage } from '../../../utils/imageUtils';
 import styles from './HotelListingPage.module.css';
 
 const HotelListingPage = () => {
@@ -152,7 +154,12 @@ const HotelListingPage = () => {
               {sortedHotels.map(hotel => (
                 <div key={hotel.id || hotel.hotel_id} className={styles.card}>
                   <div className={styles.cardImage}>
-                    <Building size={36} className={styles.placeholderIcon} />
+                    <ImageWithFallback
+                      src={getPrimaryImage(hotel.images)?.image_url}
+                      alt={getPrimaryImage(hotel.images)?.alt_text || hotel.name}
+                      fallbackIcon={Building}
+                      iconSize={36}
+                    />
                   </div>
                   <div className={styles.cardBody}>
                     <h3 className={styles.cardTitle}>{hotel.name}</h3>

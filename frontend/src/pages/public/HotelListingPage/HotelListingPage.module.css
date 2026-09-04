@@ -46,9 +46,10 @@
 }
 
 .title {
-  font-size: 24px;
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  font-size: 28px;
   font-weight: 600;
-  color: var(--color-black);
+  color: var(--color-navy, #0f172a);
 }
 
 .sort {
@@ -102,9 +103,10 @@
 }
 
 .cardTitle {
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
   font-size: 18px;
   font-weight: 600;
-  color: var(--color-black);
+  color: var(--color-navy, #0f172a);
   margin-bottom: var(--space-2);
 }
 
