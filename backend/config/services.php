@@ -35,7 +35,7 @@ return [
         'mode' => env('CHAPA_MODE', 'test'),
         'frontend_url' => env(
             'FRONTEND_URL',
-            'https://adar-hotel.vercel.app'
+            'https://adar-hotels.vercel.app'
         ),
     ],
 
