@@ -12,7 +12,7 @@ const PaymentPage = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentMethod, setPaymentMethod] = useState('chapa');
   const [loading, setLoading] = useState(false);
 
   if (!location.state || !location.state.reservation) {
@@ -21,7 +21,7 @@ const PaymentPage = () => {
 
   const { reservation, hotel, roomType } = location.state;
 
-  const methodMap = { card: 'card', mobile: 'mobile_money', bank: 'bank_transfer' };
+  const methodMap = { chapa: 'chapa', card: 'card', mobile: 'mobile_money', bank: 'bank_transfer' };
 
   const handlePayment = async () => {
     setLoading(true);
@@ -81,6 +81,19 @@ const PaymentPage = () => {
               <h2 className={styles.cardTitle}>Payment Method</h2>
               
               <div className={styles.methodList}>
+                <label className={`${styles.methodOption} ${paymentMethod === 'chapa' ? styles.selected : ''}`}>
+                  <input 
+                    type="radio" 
+                    name="paymentMethod" 
+                    value="chapa" 
+                    checked={paymentMethod === 'chapa'} 
+                    onChange={(e) => setPaymentMethod(e.target.value)} 
+                    className={styles.radio}
+                  />
+                  <CreditCard size={24} className={styles.methodIcon} />
+                  <span className={styles.methodName}>Chapa (Cards, Telebirr, CBEBirr)</span>
+                </label>
+
                 <label className={`${styles.methodOption} ${paymentMethod === 'card' ? styles.selected : ''}`}>
                   <input 
                     type="radio" 

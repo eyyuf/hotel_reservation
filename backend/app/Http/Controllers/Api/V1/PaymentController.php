@@ -300,6 +300,18 @@ class PaymentController extends Controller
             ], 422);
         }
 
+        $alreadyPaid = Payment::where('invoice_id', $payment->invoice_id)
+            ->where('status', 'successful')
+            ->sum('amount');
+        $remainingAmount = round((float) $payment->invoice->total_amount - (float) $alreadyPaid, 2);
+
+        if (abs((float) $payment->amount - $remainingAmount) >= 0.01) {
+            return response()->json([
+                'message' => 'Chapa payments must cover the full remaining invoice balance.',
+                'remaining_amount' => number_format($remainingAmount, 2, '.', ''),
+            ], 422);
+        }
+
         try {
             $result = $chapaService->initializePayment(
                 $payment,
@@ -315,7 +327,6 @@ class PaymentController extends Controller
 
             return response()->json([
                 'message' => 'Unable to initialize Chapa payment.',
-                'debug' => $e->getMessage(),
             ], 500);
         }
 

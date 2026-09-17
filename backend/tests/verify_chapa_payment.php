@@ -61,7 +61,9 @@ class ChapaPaymentTestRunner
         echo "Environment ready. Running Chapa payment tests...\n\n";
 
         $this->testCreateReservationAndPendingPayment();
+        $this->testPartialPaymentFollowedByChapa();
         $this->testChapaRejectsPartialAmount();
+        $this->testChapaAmountGreaterThanRemainingBalance();
         $this->testInitializeChapaPayment();
         $this->testUnauthorizedGuestCannotInitializePayment();
         $this->testChapaInitializationFailureHandledSafely();
@@ -70,6 +72,9 @@ class ChapaPaymentTestRunner
         $this->testCurrencyMismatchRejected();
         $this->testMissingTxRefRejected();
         $this->testTxRefMismatchRejected();
+        $this->testInvalidTransactionReferenceReturns404();
+        $this->testCancelledInvoiceRejection();
+        $this->testAlreadyPaidInvoiceRejection();
         $this->testFailedChapaTransactionMarksPaymentFailed();
         $this->testInnerTransactionFailedMarksPaymentFailed();
         $this->testPendingGatewayTransactionReturns202AndKeepsPending();
@@ -142,7 +147,7 @@ class ChapaPaymentTestRunner
         $this->tokenGuestB = $this->guestB->createToken('guest-b-token')->plainTextToken;
     }
 
-    private function createTestReservation($guest): Reservation
+    private function createTestReservation($guest, $totalAmount = 1000.00): Reservation
     {
         $reservation = new Reservation();
         $reservation->booking_reference = 'BR-' . Str::uuid();
@@ -155,18 +160,18 @@ class ChapaPaymentTestRunner
         $reservation->number_of_rooms = 1;
         $reservation->adults = 2;
         $reservation->children = 0;
-        $reservation->nightly_rate = 500.00;
-        $reservation->total_amount = 1000.00;
+        $reservation->nightly_rate = $totalAmount / 2;
+        $reservation->total_amount = $totalAmount;
         $reservation->status = 'pending';
         $reservation->save();
 
         $invoice = new Invoice();
         $invoice->reservation_id = $reservation->id;
         $invoice->invoice_number = 'INV-' . $reservation->id . '-' . strtoupper(Str::random(6));
-        $invoice->subtotal = 1000.00;
+        $invoice->subtotal = $totalAmount;
         $invoice->tax_amount = 0;
         $invoice->discount_amount = 0;
-        $invoice->total_amount = 1000.00;
+        $invoice->total_amount = $totalAmount;
         $invoice->status = 'unpaid';
         $invoice->issued_at = now();
         $invoice->save();
@@ -201,6 +206,99 @@ class ChapaPaymentTestRunner
         $this->assert(is_null($data['data']['transaction_reference']), "Transaction reference is null until Chapa initialization");
     }
 
+    private function testPartialPaymentFollowedByChapa()
+    {
+        $this->resetHttp();
+        echo "Test: Partial payment followed by Chapa covering remaining balance\n";
+
+        $reservation = $this->createTestReservation($this->guestA, 1000.00);
+
+        // 1. First partial payment of 400.00 via card/simulate
+        $controller = new PaymentController();
+        $partialReq = Request::create(
+            "/api/v1/guest/reservations/{$reservation->id}/payments",
+            'POST',
+            [
+                'amount' => 400.00,
+                'payment_method' => 'card',
+            ]
+        );
+        $partialReq->setUserResolver(fn() => $this->guestA);
+        $partialRes = $controller->guestStore($partialReq, $reservation);
+        $partialData = json_decode($partialRes->getContent(), true);
+        $partialPayment = Payment::find($partialData['data']['payment_id']);
+
+        // Simulate successful completion of partial payment
+        $simReq = Request::create("/api/v1/guest/payments/{$partialPayment->id}/simulate", 'POST');
+        $simReq->setUserResolver(fn() => $this->guestA);
+        $simRes = $controller->simulate($simReq, $partialPayment);
+
+        $invoice = $reservation->invoice->fresh();
+        $this->assert($invoice->status === 'partially_paid', "Invoice is 'partially_paid' after 400 ETB partial payment");
+
+        // 2. Now guest creates a Chapa payment for the remaining 600.00
+        $chapaReq = Request::create(
+            "/api/v1/guest/reservations/{$reservation->id}/payments",
+            'POST',
+            [
+                'amount' => 600.00,
+                'payment_method' => 'chapa',
+            ]
+        );
+        $chapaReq->setUserResolver(fn() => $this->guestA);
+        $chapaRes = $controller->guestStore($chapaReq, $reservation);
+        $chapaData = json_decode($chapaRes->getContent(), true);
+
+        $this->assert($chapaRes->getStatusCode() === 201, "POST payment with exact remaining balance returns 201");
+        $chapaPayment = Payment::find($chapaData['data']['payment_id']);
+        $this->assert((float) $chapaPayment->amount === 600.00, "Chapa payment amount is 600.00");
+
+        // 3. Guest initializes Chapa checkout
+        Http::fake([
+            'https://api.chapa.co/v1/transaction/initialize' => Http::response([
+                'message' => 'Hosted Link',
+                'status' => 'success',
+                'data' => [
+                    'checkout_url' => 'https://checkout.chapa.co/checkout/payment/partial-test-url',
+                ],
+            ], 200),
+        ]);
+
+        $initReq = Request::create("/api/v1/guest/payments/{$chapaPayment->id}/initialize", 'POST');
+        $initReq->setUserResolver(fn() => $this->guestA);
+        $initRes = $controller->initializeChapa($initReq, $chapaPayment, $this->chapaService);
+        $initData = json_decode($initRes->getContent(), true);
+
+        $this->assert($initRes->getStatusCode() === 200, "Chapa initialization succeeds for remaining balance");
+        $txRef = $initData['data']['transaction_reference'];
+
+        // 4. Verify Chapa payment completes invoice
+        Http::fake([
+            "https://api.chapa.co/v1/transaction/verify/{$txRef}" => Http::response([
+                'message' => 'Payment details retrieved',
+                'status' => 'success',
+                'data' => [
+                    'currency' => 'ETB',
+                    'amount' => 600.00,
+                    'status' => 'success',
+                    'tx_ref' => $txRef,
+                ],
+            ], 200),
+        ]);
+
+        $verifyReq = Request::create("/api/v1/payments/chapa/verify/{$txRef}", 'GET');
+        $verifyRes = $controller->verifyChapa($verifyReq, $txRef, $this->chapaService);
+
+        $chapaPayment->refresh();
+        $invoice->refresh();
+        $reservation->refresh();
+
+        $this->assert($verifyRes->getStatusCode() === 200, "Verification succeeds for final partial amount");
+        $this->assert($chapaPayment->status === 'successful', "Chapa payment marked 'successful'");
+        $this->assert($invoice->status === 'paid', "Invoice transitions to 'paid'");
+        $this->assert($reservation->status === 'confirmed', "Reservation transitions to 'confirmed'");
+    }
+
     private function testChapaRejectsPartialAmount()
     {
         echo "Test 2: Chapa payments must cover the full remaining invoice balance\n";
@@ -223,6 +321,64 @@ class ChapaPaymentTestRunner
 
         $this->assert($response->getStatusCode() === 422, "Partial amount for Chapa returns 422 Unprocessable Entity");
         $this->assert(str_contains($data['message'] ?? '', 'full remaining invoice balance'), "Message indicates full balance required");
+    }
+
+    private function testChapaAmountGreaterThanRemainingBalance()
+    {
+        $this->resetHttp();
+        echo "Test: Chapa payment amount greater than remaining balance is rejected\n";
+
+        $reservation = $this->createTestReservation($this->guestA, 1000.00);
+
+        // Make partial payment of 500
+        $controller = new PaymentController();
+        $payment = new Payment();
+        $payment->invoice_id = $reservation->invoice->id;
+        $payment->recorded_by_user_id = $this->guestA->id;
+        $payment->amount = 500.00;
+        $payment->payment_method = 'card';
+        $payment->payment_channel = 'online';
+        $payment->status = 'successful';
+        $payment->paid_at = now();
+        $payment->save();
+
+        $reservation->invoice->status = 'partially_paid';
+        $reservation->invoice->save();
+
+        // Guest tries to create Chapa payment of 600 (remaining is 500)
+        $request = Request::create(
+            "/api/v1/guest/reservations/{$reservation->id}/payments",
+            'POST',
+            [
+                'amount' => 600.00,
+                'payment_method' => 'chapa',
+            ]
+        );
+        $request->setUserResolver(fn() => $this->guestA);
+
+        $response = $controller->guestStore($request, $reservation);
+        $data = json_decode($response->getContent(), true);
+
+        $this->assert($response->getStatusCode() === 422, "Amount > remaining balance returns 422 in guestStore");
+        $this->assert(str_contains($data['message'] ?? '', 'exceeds remaining invoice balance') || str_contains($data['message'] ?? '', 'full remaining invoice balance'), "Rejects overpayment");
+
+        // Also test initializeChapa if payment record had 1000 but balance became 500
+        $pendingPayment = new Payment();
+        $pendingPayment->invoice_id = $reservation->invoice->id;
+        $pendingPayment->recorded_by_user_id = $this->guestA->id;
+        $pendingPayment->amount = 1000.00;
+        $pendingPayment->payment_method = 'chapa';
+        $pendingPayment->payment_channel = 'online';
+        $pendingPayment->status = 'pending';
+        $pendingPayment->save();
+
+        $initReq = Request::create("/api/v1/guest/payments/{$pendingPayment->id}/initialize", 'POST');
+        $initReq->setUserResolver(fn() => $this->guestA);
+        $initRes = $controller->initializeChapa($initReq, $pendingPayment, $this->chapaService);
+        $initData = json_decode($initRes->getContent(), true);
+
+        $this->assert($initRes->getStatusCode() === 422, "initializeChapa rejects payment amount != current remaining balance");
+        $this->assert(str_contains($initData['message'] ?? '', 'full remaining invoice balance'), "initializeChapa informs about balance mismatch");
     }
 
     private function testInitializeChapaPayment()
@@ -546,6 +702,125 @@ class ChapaPaymentTestRunner
         $this->assert($response->getStatusCode() === 422, "Mismatched tx_ref returns 422 Unprocessable Entity");
         $this->assert(str_contains($data['message'] ?? '', 'mismatch'), "Error message notes tx_ref mismatch");
         $this->assert($payment->status === 'pending', "Payment status remains 'pending'");
+    }
+
+    private function testInvalidTransactionReferenceReturns404()
+    {
+        $this->resetHttp();
+        echo "Test: Invalid transaction reference on verify returns 404\n";
+
+        $controller = new PaymentController();
+        $txRef = 'NON-EXISTENT-TX-REF-' . Str::random(10);
+        $request = Request::create("/api/v1/payments/chapa/verify/{$txRef}", 'GET');
+
+        $response = $controller->verifyChapa($request, $txRef, $this->chapaService);
+        $data = json_decode($response->getContent(), true);
+
+        $this->assert($response->getStatusCode() === 404, "Verify non-existent tx_ref returns 404 Not Found");
+        $this->assert(str_contains($data['message'] ?? '', 'Payment not found'), "Message indicates payment not found");
+    }
+
+    private function testCancelledInvoiceRejection()
+    {
+        $this->resetHttp();
+        echo "Test: Payment on cancelled invoice is rejected in guestStore and initializeChapa\n";
+
+        $reservation = $this->createTestReservation($this->guestA, 1000.00);
+        $reservation->invoice->status = 'cancelled';
+        $reservation->invoice->save();
+
+        $controller = new PaymentController();
+
+        // 1. guestStore rejected
+        $request = Request::create(
+            "/api/v1/guest/reservations/{$reservation->id}/payments",
+            'POST',
+            [
+                'amount' => 1000.00,
+                'payment_method' => 'chapa',
+            ]
+        );
+        $request->setUserResolver(fn() => $this->guestA);
+        $response = $controller->guestStore($request, $reservation);
+
+        $this->assert($response->getStatusCode() === 422, "guestStore on cancelled invoice returns 422");
+        $data = json_decode($response->getContent(), true);
+        $this->assert(str_contains($data['message'] ?? '', 'cancelled invoice'), "guestStore rejects cancelled invoice");
+
+        // 2. initializeChapa rejected
+        $payment = new Payment();
+        $payment->invoice_id = $reservation->invoice->id;
+        $payment->recorded_by_user_id = $this->guestA->id;
+        $payment->amount = 1000.00;
+        $payment->payment_method = 'chapa';
+        $payment->payment_channel = 'online';
+        $payment->status = 'pending';
+        $payment->save();
+
+        $initReq = Request::create("/api/v1/guest/payments/{$payment->id}/initialize", 'POST');
+        $initReq->setUserResolver(fn() => $this->guestA);
+        $initRes = $controller->initializeChapa($initReq, $payment, $this->chapaService);
+        $initData = json_decode($initRes->getContent(), true);
+
+        $this->assert($initRes->getStatusCode() === 422, "initializeChapa on cancelled invoice returns 422");
+        $this->assert(str_contains($initData['message'] ?? '', 'cancelled invoice'), "initializeChapa rejects cancelled invoice");
+    }
+
+    private function testAlreadyPaidInvoiceRejection()
+    {
+        $this->resetHttp();
+        echo "Test: Payment on already paid invoice is rejected in guestStore and initializeChapa\n";
+
+        $reservation = $this->createTestReservation($this->guestA, 1000.00);
+        $reservation->invoice->status = 'paid';
+        $reservation->invoice->save();
+
+        // Create successful payment to make remaining balance 0
+        $paidPayment = new Payment();
+        $paidPayment->invoice_id = $reservation->invoice->id;
+        $paidPayment->recorded_by_user_id = $this->guestA->id;
+        $paidPayment->amount = 1000.00;
+        $paidPayment->payment_method = 'card';
+        $paidPayment->payment_channel = 'online';
+        $paidPayment->status = 'successful';
+        $paidPayment->paid_at = now();
+        $paidPayment->save();
+
+        $controller = new PaymentController();
+
+        // 1. guestStore rejected
+        $request = Request::create(
+            "/api/v1/guest/reservations/{$reservation->id}/payments",
+            'POST',
+            [
+                'amount' => 1000.00,
+                'payment_method' => 'chapa',
+            ]
+        );
+        $request->setUserResolver(fn() => $this->guestA);
+        $response = $controller->guestStore($request, $reservation);
+
+        $this->assert($response->getStatusCode() === 422, "guestStore on fully paid invoice returns 422");
+        $data = json_decode($response->getContent(), true);
+        $this->assert(str_contains($data['message'] ?? '', 'fully paid'), "guestStore rejects fully paid invoice");
+
+        // 2. initializeChapa rejected
+        $pendingPayment = new Payment();
+        $pendingPayment->invoice_id = $reservation->invoice->id;
+        $pendingPayment->recorded_by_user_id = $this->guestA->id;
+        $pendingPayment->amount = 1000.00;
+        $pendingPayment->payment_method = 'chapa';
+        $pendingPayment->payment_channel = 'online';
+        $pendingPayment->status = 'pending';
+        $pendingPayment->save();
+
+        $initReq = Request::create("/api/v1/guest/payments/{$pendingPayment->id}/initialize", 'POST');
+        $initReq->setUserResolver(fn() => $this->guestA);
+        $initRes = $controller->initializeChapa($initReq, $pendingPayment, $this->chapaService);
+        $initData = json_decode($initRes->getContent(), true);
+
+        $this->assert($initRes->getStatusCode() === 422, "initializeChapa on fully paid invoice returns 422");
+        $this->assert(str_contains($initData['message'] ?? '', 'fully paid'), "initializeChapa rejects fully paid invoice");
     }
 
     private function testFailedChapaTransactionMarksPaymentFailed()
