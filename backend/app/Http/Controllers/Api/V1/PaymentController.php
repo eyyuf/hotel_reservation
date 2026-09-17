@@ -402,17 +402,25 @@ class PaymentController extends Controller
             ], 500);
         }
 
-        $innerData = $verification['data'] ?? $verification;
-        $isApiSuccess = ($verification['status'] ?? '') === 'success';
+        $innerData = $verification['data'] ?? [];
+        $apiStatus = strtolower((string) ($verification['status'] ?? ''));
         $gatewayStatus = strtolower((string) ($innerData['status'] ?? ''));
 
-        // If gateway explicitly confirmed failure or cancellation
-        if (in_array($gatewayStatus, ['failed', 'cancelled'], true) || ($verification['status'] ?? '') === 'failed') {
+        $isSuccessful =
+            $apiStatus === 'success' &&
+            $gatewayStatus === 'success';
+
+        $isExplicitlyFailed =
+            in_array($gatewayStatus, ['failed', 'cancelled'], true) ||
+            $apiStatus === 'failed';
+
+        if ($isExplicitlyFailed) {
             $payment->status = 'failed';
             $payment->save();
 
             return response()->json([
-                'message' => 'Payment verification failed: ' . ($verification['message'] ?? 'Transaction was not successful.'),
+                'message' => 'Payment verification failed: ' .
+                    ($verification['message'] ?? 'Transaction was not successful.'),
                 'data' => [
                     'payment_id' => $payment->id,
                     'status' => 'failed',
@@ -421,8 +429,7 @@ class PaymentController extends Controller
             ], 422);
         }
 
-        // If not successful and not explicitly failed, treat as pending
-        if (!$isApiSuccess || $gatewayStatus !== 'success') {
+        if (!$isSuccessful) {
             return response()->json([
                 'message' => 'Payment is still pending verification.',
                 'data' => [
