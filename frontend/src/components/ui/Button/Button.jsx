@@ -11,14 +11,17 @@ const Button = ({
   children,
   onClick,
   type = 'button',
+  className = '',
   ...props
 }) => {
+  const sizeKey = size === 'large' ? 'lg' : size === 'small' ? 'sm' : size;
   const classNames = [
     styles.button,
-    styles[variant],
-    styles[size],
+    styles[variant] || styles.primary,
+    styles[sizeKey] || styles.md,
     fullWidth ? styles.fullWidth : '',
-    isLoading ? styles.loading : ''
+    isLoading ? styles.loading : '',
+    className
   ].filter(Boolean).join(' ');
 
   return (

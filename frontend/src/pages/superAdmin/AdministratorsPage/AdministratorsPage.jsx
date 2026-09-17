@@ -18,20 +18,21 @@ export default function AdministratorsPage() {
         const hotelsData = hotelsRes.data?.data;
         const hotels = Array.isArray(hotelsData) ? hotelsData : [];
 
+        const managerResults = await Promise.allSettled(
+          hotels.map((hotel) => superAdminApi.getManagers(hotel.hotel_id))
+        );
+
         const results = [];
-        for (const hotel of hotels) {
-          try {
-            const managersRes = await superAdminApi.getManagers(hotel.hotel_id);
-            const managers = managersRes.data?.data;
+        hotels.forEach((hotel, i) => {
+          if (managerResults[i].status === 'fulfilled') {
+            const managers = managerResults[i].value.data?.data;
             if (Array.isArray(managers)) {
-              managers.forEach(m => {
+              managers.forEach((m) => {
                 results.push({ ...m, hotelName: hotel.name });
               });
             }
-          } catch (e) {
-            // skip if managers endpoint fails for this hotel
           }
-        }
+        });
         setHotelManagers(results);
       } catch (error) {
         console.error('Failed to fetch administrators', error);

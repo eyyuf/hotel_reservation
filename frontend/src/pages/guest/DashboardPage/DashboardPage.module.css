@@ -10,7 +10,8 @@
 }
 
 .upcomingCard {
-  background-color: var(--color-blue-pale);
+  background-color: var(--color-gray-50);
+  border: 1px solid var(--color-gray-200);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
 }

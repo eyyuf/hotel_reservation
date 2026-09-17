@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import Toast from '../components/ui/Toast/Toast';
 
@@ -20,8 +20,10 @@ export const ToastProvider = ({ children }) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
+  const contextValue = useMemo(() => ({ showToast, addToast: showToast }), [showToast]);
+
   return (
-    <ToastContext.Provider value={{ showToast, addToast: showToast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       {typeof document !== 'undefined' && createPortal(
         <div className="toast-container" style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '8px' }}>

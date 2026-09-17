@@ -8,6 +8,7 @@ import Skeleton from '../../../components/ui/Skeleton/Skeleton';
 import EmptyState from '../../../components/ui/EmptyState/EmptyState';
 import { receptionistApi } from '../../../services/receptionist/receptionistApi';
 import { useToast } from '../../../context/ToastContext';
+import { getLocalDateString, isSameDay } from '../../../utils/formatDate';
 import styles from './DashboardPage.module.css';
 
 export default function DashboardPage() {
@@ -53,11 +54,11 @@ export default function DashboardPage() {
     }
   };
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
   const formattedToday = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
 
-  const arrivals = reservations.filter(r => r.check_in_date === today && r.status === 'confirmed');
-  const departures = reservations.filter(r => r.check_out_date === today && r.status === 'checked_in');
+  const arrivals = reservations.filter(r => isSameDay(r.check_in_date || r.check_in, today) && r.status === 'confirmed');
+  const departures = reservations.filter(r => isSameDay(r.check_out_date || r.check_out, today) && r.status === 'checked_in');
   const checkedInCount = reservations.filter(r => r.status === 'checked_in').length;
   const pendingCount = reservations.filter(r => r.status === 'pending').length;
 

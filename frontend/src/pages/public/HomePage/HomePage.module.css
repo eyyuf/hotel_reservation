@@ -1,158 +1,454 @@
 .homePage {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-16);
-  padding-bottom: var(--space-16);
+  min-height: 100%;
+  background-color: var(--color-warm, #fafaf9);
+  color: var(--color-navy, #0f172a);
 }
 
+/* ── Hero Section ── */
 .hero {
-  background-color: var(--color-beige);
-  padding: var(--space-16) var(--space-4);
+  position: relative;
+  min-height: calc(100vh - 64px);
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-top: 2rem;
+  padding-bottom: 3rem;
+  background-color: #292524;
+  overflow: hidden;
+}
+
+.heroBgImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.75;
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 23, 42, 0.35) 0%,
+    rgba(15, 23, 42, 0.15) 40%,
+    rgba(15, 23, 42, 0.7) 100%
+  );
 }
 
 .heroContent {
+  position: relative;
+  z-index: 10;
+  max-width: 1152px;
+  margin: 0 auto;
   width: 100%;
-  max-width: 1200px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+  padding: 0 1.5rem;
+}
+
+.heroTextArea {
+  max-width: 580px;
+  margin-bottom: 2.5rem;
 }
 
 .heroTitle {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--color-black);
-  margin-bottom: var(--space-2);
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  color: #ffffff;
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  font-weight: 600;
+  line-height: 1.15;
+  margin-bottom: 1rem;
 }
 
 .heroSubtitle {
-  font-size: 16px;
-  color: var(--color-gray-500);
-  margin-bottom: var(--space-8);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.125rem;
+  line-height: 1.6;
 }
 
+/* ── Search Form Card ── */
 .searchCard {
-  background-color: var(--color-white);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  padding: var(--space-6);
-  width: 100%;
-  max-width: 900px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 1.25rem;
 }
 
-.searchForm {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+.searchGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
 }
 
 @media (min-width: 768px) {
-  .searchForm {
-    flex-direction: row;
-    align-items: flex-end;
+  .searchGrid {
+    grid-template-columns: 1.2fr 1fr 1fr 1.4fr;
+    gap: 0;
+  }
+
+  .searchCol:not(:last-child) {
+    border-right: 1px solid var(--color-stone-200, #e7e5e4);
+  }
+
+  .searchCol:first-child {
+    padding-right: 1rem;
+  }
+
+  .searchCol:nth-child(2),
+  .searchCol:nth-child(3) {
+    padding: 0 1rem;
+  }
+
+  .searchCol:last-child {
+    padding-left: 1rem;
   }
 }
 
-.dateInputs {
+.searchCol {
   display: flex;
-  flex-direction: row;
-  gap: var(--space-4);
-  flex: 2;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
-.searchButtonWrapper {
+.searchColAction {
   display: flex;
   align-items: flex-end;
-  min-width: 150px;
+  gap: 0.75rem;
 }
 
-.searchButton {
-  height: 44px;
+.fieldLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-stone-500, #78716c);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
 }
 
-.destinations, .features {
-  padding: 0 var(--space-4);
-  max-width: 1200px;
-  margin: 0 auto;
+.fieldLabel svg {
+  color: var(--color-stone-500, #78716c);
+}
+
+.fieldInput {
+  font-size: 0.875rem;
+  color: var(--color-navy, #0f172a);
+  border: none;
+  outline: none;
+  background: transparent;
   width: 100%;
+  padding: 0.25rem 0;
+}
+
+.fieldInput::placeholder {
+  color: var(--color-stone-400, #a8a29e);
+}
+
+.fieldSelect {
+  font-size: 0.875rem;
+  color: var(--color-navy, #0f172a);
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  padding: 0.25rem 0;
+  cursor: pointer;
+}
+
+.searchBtn {
+  background-color: var(--color-amber, #b45309);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.625rem 1.25rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 40px;
+}
+
+.searchBtn:hover {
+  background-color: var(--color-amber-hover, #92400e);
+}
+
+/* ── Popular Destinations ── */
+.destinations {
+  padding: 5rem 1.5rem;
+  max-width: 1152px;
+  margin: 0 auto;
+}
+
+.sectionPretitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-amber, #b45309);
+  text-transform: uppercase;
+  letter-spacing: 0.125em;
+  margin-bottom: 0.5rem;
+}
+
+.sectionPretitleAmber {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-amber-light, #d97706);
+  text-transform: uppercase;
+  letter-spacing: 0.125em;
+  margin-bottom: 0.5rem;
 }
 
 .sectionTitle {
-  font-size: 24px;
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  font-size: clamp(1.875rem, 4vw, 2.25rem);
   font-weight: 600;
-  color: var(--color-black);
-  margin-bottom: var(--space-6);
+  color: var(--color-navy, #0f172a);
+  margin: 0;
+}
+
+.sectionTitleWhite {
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  font-size: clamp(1.875rem, 4vw, 2.25rem);
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+.destinationHeader {
+  margin-bottom: 2.5rem;
 }
 
 .destinationGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: var(--space-6);
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .destinationGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .destinationCard {
-  cursor: pointer;
-  border-radius: var(--radius-md);
+  position: relative;
+  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--color-gray-200);
-  transition: box-shadow var(--transition-base);
+  aspect-ratio: 3 / 4;
+  background-color: var(--color-stone-200, #e7e5e4);
+  display: block;
+  text-decoration: none;
 }
 
-.destinationCard:hover {
-  box-shadow: var(--shadow-md);
+.destinationImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
 }
 
-.destinationImagePlaceholder {
-  height: 160px;
-  background-color: var(--color-gray-100);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.destinationCard:hover .destinationImage {
+  transform: scale(1.05);
 }
 
-.destinationIcon {
-  color: var(--color-gray-400);
+.destinationOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(15, 23, 42, 0.85) 0%,
+    rgba(15, 23, 42, 0.1) 60%
+  );
+}
+
+.destinationInfo {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
 }
 
 .destinationName {
-  padding: var(--space-4);
-  font-size: 18px;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.destinationSubtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  margin: 0.25rem 0 0;
+}
+
+.destinationExplore {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  color: var(--color-amber-light, #d97706);
+  font-size: 0.75rem;
   font-weight: 500;
-  color: var(--color-black);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.featureGrid {
+.destinationCard:hover .destinationExplore {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Why ADAR ── */
+.whySection {
+  background-color: var(--color-navy, #0f172a);
+  padding: 5rem 1.5rem;
+}
+
+.whyContainer {
+  max-width: 1152px;
+  margin: 0 auto;
+}
+
+.whyHeader {
+  max-width: 480px;
+  margin-bottom: 3rem;
+}
+
+.whyGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-8);
+  grid-template-columns: 1fr;
+  gap: 2rem;
 }
 
-.featureCard {
+@media (min-width: 640px) {
+  .whyGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .whyGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.whyCard {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
+}
+
+.whyIconWrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  display: flex;
   align-items: center;
-  text-align: center;
-  padding: var(--space-6);
-  background-color: var(--color-gray-50);
-  border-radius: var(--radius-md);
+  justify-content: center;
+  color: var(--color-amber-light, #d97706);
 }
 
-.featureIcon {
-  color: var(--color-black);
-  margin-bottom: var(--space-4);
-}
-
-.featureTitle {
-  font-size: 18px;
+.whyCardTitle {
   font-weight: 600;
-  margin-bottom: var(--space-2);
-  color: var(--color-black);
+  color: #ffffff;
+  font-size: 1rem;
+  margin: 0 0 0.375rem;
 }
 
-.featureDesc {
-  color: var(--color-gray-600);
-  line-height: 1.5;
+.whyCardBody {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Discovery / CTA Section ── */
+.ctaSection {
+  padding: 5rem 1.5rem;
+  max-width: 1152px;
+  margin: 0 auto;
+}
+
+.ctaGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .ctaGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.ctaImageWrapper {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background-color: var(--color-stone-200, #e7e5e4);
+}
+
+.ctaImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ctaContent {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 1024px) {
+  .ctaContent {
+    padding-left: 1.5rem;
+  }
+}
+
+.ctaHeading {
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  font-size: clamp(1.875rem, 4vw, 2.25rem);
+  font-weight: 600;
+  color: var(--color-navy, #0f172a);
+  line-height: 1.2;
+  margin: 0 0 1.25rem;
+}
+
+.ctaDesc {
+  color: var(--color-stone-500, #78716c);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  font-size: 1rem;
+}
+
+.ctaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-navy, #0f172a);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+  align-self: flex-start;
+}
+
+.ctaBtn:hover {
+  background-color: var(--color-navy-light, #1e293b);
+  text-decoration: none;
 }

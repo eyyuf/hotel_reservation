@@ -12,22 +12,23 @@ class PublicHotelController extends Controller
 {
     public function index(): JsonResponse
     {
-        $hotels = Hotel::where('status','active')->paginate(10);
-
+        $hotels = Hotel::where('status', 'active')
+            ->with(['images' => fn($q) => $q->orderBy('sort_order', 'asc')->orderBy('id', 'asc')])
+            ->paginate(10);
 
         return response()->json([
             'message' => 'Hotels retrived successfuly',
-            'data'=>$hotels,
+            'data' => $hotels,
         ], 200);
     }
 
     public function show(Hotel $hotel): JsonResponse
     {
-        if($hotel->status !== 'active'){
+        if ($hotel->status !== 'active') {
             abort(404);
-        }; 
+        }
 
-
+        $hotel->load(['images' => fn($q) => $q->orderBy('sort_order', 'asc')->orderBy('id', 'asc')]);
 
         return response()->json([
             'message' => 'Hotel retrived successfuly',
@@ -37,34 +38,35 @@ class PublicHotelController extends Controller
 
     public function roomTypes(Hotel $hotel): JsonResponse
     {
-        if($hotel->status !== 'active'){
+        if ($hotel->status !== 'active') {
             abort(404);
-        };
-        
-        $roomTypes = $hotel->roomTypes()->where('status','active')->paginate(10);
+        }
 
-
-
+        $roomTypes = $hotel->roomTypes()
+            ->where('status', 'active')
+            ->with(['images' => fn($q) => $q->orderBy('sort_order', 'asc')->orderBy('id', 'asc')])
+            ->paginate(10);
 
         return response()->json([
             'message' => 'Room Types retrived successfuly.',
-            'data'=>$roomTypes,
+            'data' => $roomTypes,
         ], 200);
     }
 
-    public function roomType(Hotel $hotel ,RoomType $roomType): JsonResponse
+    public function roomType(Hotel $hotel, RoomType $roomType): JsonResponse
     {
-        if($hotel->status !== 'active'){
+        if ($hotel->status !== 'active') {
             abort(404);
-        };
-        if($roomType->hotel_id !== $hotel->id || $roomType->status !== 'active'){
+        }
+        if ($roomType->hotel_id !== $hotel->id || $roomType->status !== 'active') {
             abort(404);
-        };
+        }
 
+        $roomType->load(['images' => fn($q) => $q->orderBy('sort_order', 'asc')->orderBy('id', 'asc')]);
 
         return response()->json([
             'message' => 'Room type retrived successfuly.',
-            'data'=> $roomType,
+            'data' => $roomType,
         ], 200);
     }
 

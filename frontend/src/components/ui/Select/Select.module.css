@@ -1,47 +1,51 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
   width: 100%;
 }
 
 .label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-black);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-gray-800);
+  line-height: var(--leading-tight);
 }
 
 .required {
   color: var(--color-error);
+  margin-left: 2px;
 }
 
 .select {
   width: 100%;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-gray-300);
+  padding: 10px var(--space-8) 10px var(--space-3);
+  border: 1px solid var(--border-color-dark);
   border-radius: var(--radius-md);
-  font-size: 16px;
+  font-size: var(--text-base);
   font-family: inherit;
-  color: var(--color-black);
+  color: var(--color-gray-900);
   background-color: var(--color-white);
-  transition: border-color var(--transition-fast) ease, outline var(--transition-fast) ease;
-  min-height: 44px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  min-height: 42px;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
-  background-position: right var(--space-4) top 50%;
-  background-size: 12px auto;
+  background-position: right var(--space-3) center;
+  background-size: 16px 16px;
+  cursor: pointer;
 }
 
 .select:focus {
-  outline: 2px solid var(--color-black);
-  outline-offset: -1px;
-  border-color: transparent;
+  outline: none;
+  border-color: var(--color-black);
+  box-shadow: 0 0 0 1px var(--color-black);
 }
 
 .select:disabled {
   background-color: var(--color-gray-100);
   color: var(--color-gray-500);
+  border-color: var(--color-gray-200);
   cursor: not-allowed;
 }
 
@@ -50,10 +54,13 @@
 }
 
 .select.hasError:focus {
-  outline-color: var(--color-error);
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 1px var(--color-error);
 }
 
 .errorText {
-  font-size: 14px;
+  font-size: var(--text-xs);
   color: var(--color-error);
+  font-weight: var(--weight-medium);
+  margin-top: 2px;
 }

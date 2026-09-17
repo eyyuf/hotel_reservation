@@ -13,6 +13,7 @@ const Input = forwardRef(({
   disabled = false,
   id,
   name,
+  icon,
   as: Component = 'input',
   ...props
 }, ref) => {
@@ -25,19 +26,22 @@ const Input = forwardRef(({
           {label} {required && <span className={styles.required}>*</span>}
         </label>
       )}
-      <Component
-        ref={ref}
-        id={inputId}
-        name={name}
-        type={Component === 'input' ? type : undefined}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-        required={required}
-        className={`${styles.input} ${error ? styles.hasError : ''} ${Component === 'textarea' ? styles.textarea : ''}`}
-        {...props}
-      />
+      <div className={styles.inputWrapper}>
+        {icon && <span className={styles.iconWrapper}>{icon}</span>}
+        <Component
+          ref={ref}
+          id={inputId}
+          name={name}
+          type={Component === 'input' ? type : undefined}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          required={required}
+          className={`${styles.input} ${icon ? styles.hasIcon : ''} ${error ? styles.hasError : ''} ${Component === 'textarea' ? styles.textarea : ''}`}
+          {...props}
+        />
+      </div>
       {error && <span className={styles.errorText}>{error}</span>}
       {!error && helperText && <span className={styles.helperText}>{helperText}</span>}
     </div>

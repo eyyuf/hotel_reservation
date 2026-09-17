@@ -25,6 +25,7 @@ const HotelDetailPage = React.lazy(() => import('../pages/public/HotelDetailPage
 const ReservationPage = React.lazy(() => import('../pages/public/ReservationPage/ReservationPage'));
 const PaymentPage = React.lazy(() => import('../pages/public/PaymentPage/PaymentPage'));
 const ConfirmationPage = React.lazy(() => import('../pages/public/ConfirmationPage/ConfirmationPage'));
+const PaymentVerifyPage = React.lazy(() => import('../pages/public/PaymentVerifyPage/PaymentVerifyPage'));
 
 // Guest Pages
 const GuestDashboardPage = React.lazy(() => import('../pages/guest/DashboardPage/DashboardPage'));
@@ -75,6 +76,7 @@ function AppRoutes() {
           <Route path="/hotels/:hotelId" element={<HotelDetailPage />} />
           <Route path="/reservation" element={<ReservationPage />} />
           <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/payment/verify" element={<PaymentVerifyPage />} />
           <Route path="/confirmation" element={<ConfirmationPage />} />
         </Route>
 

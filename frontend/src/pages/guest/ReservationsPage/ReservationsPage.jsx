@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { reservationApi } from '../../../services/reservations/reservationApi';
-import { enrichReservation } from '../../../utils/enrichReservation';
+import { batchEnrichReservations } from '../../../utils/enrichReservation';
 import { formatDate } from '../../../utils/formatDate';
 import PageHeader from '../../../components/layout/PageHeader/PageHeader';
 import Table from '../../../components/ui/Table/Table';
@@ -17,31 +17,43 @@ const ReservationsPage = () => {
   const [pagination, setPagination] = useState({ lastPage: 1 });
 
   useEffect(() => {
-    fetchReservations();
-  }, [activeTab, page]);
+    let isMounted = true;
 
-  const fetchReservations = async () => {
-    setLoading(true);
-    try {
-      const response = await reservationApi.getReservations({ page, per_page: 10 });
-      let filtered = response.data.data || [];
-      
-      if (activeTab === 'upcoming') {
-        filtered = filtered.filter(r => ['pending', 'confirmed'].includes(r.status));
-      } else if (activeTab === 'past') {
-        filtered = filtered.filter(r => ['checked_in', 'checked_out'].includes(r.status));
-      } else if (activeTab === 'cancelled') {
-        filtered = filtered.filter(r => r.status === 'cancelled');
+    const fetchReservations = async () => {
+      setLoading(true);
+      try {
+        const response = await reservationApi.getReservations({ page, per_page: 10 });
+        if (!isMounted) return;
+        let filtered = response.data.data || [];
+        
+        if (activeTab === 'upcoming') {
+          filtered = filtered.filter(r => ['pending', 'confirmed'].includes(r.status));
+        } else if (activeTab === 'past') {
+          filtered = filtered.filter(r => ['checked_in', 'checked_out'].includes(r.status));
+        } else if (activeTab === 'cancelled') {
+          filtered = filtered.filter(r => r.status === 'cancelled');
+        }
+        
+        const enriched = await batchEnrichReservations(filtered);
+        if (!isMounted) return;
+        setReservations(enriched);
+        if (response.data.meta) setPagination({ lastPage: response.data.meta.last_page });
+      } catch (error) {
+        if (!isMounted) return;
+        console.error('Error fetching reservations', error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-      
-      setReservations(await Promise.all(filtered.map(enrichReservation)));
-      if (response.data.meta) setPagination({ lastPage: response.data.meta.last_page });
-    } catch (error) {
-      console.error('Error fetching reservations', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchReservations();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab, page]);
 
   const getStatusBadge = (status) => {
     const variants = {
@@ -71,7 +83,13 @@ const ReservationsPage = () => {
     {
       key: 'action', label: 'Action',
       render: (row) => (
-        <Link to={`/guest/reservations/${row.reservation_id}`} className={styles.actionLink}>View</Link>
+        <Link 
+          to={`/guest/reservations/${row.reservation_id}`} 
+          state={{ reservation: row }}
+          className={styles.actionLink}
+        >
+          View
+        </Link>
       )
     }
   ];

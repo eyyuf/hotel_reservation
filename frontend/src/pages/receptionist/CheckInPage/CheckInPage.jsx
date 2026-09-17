@@ -7,6 +7,7 @@ import EmptyState from '../../../components/ui/EmptyState/EmptyState';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog';
 import { receptionistApi } from '../../../services/receptionist/receptionistApi';
 import { useToast } from '../../../context/ToastContext';
+import { getLocalDateString, isSameDay } from '../../../utils/formatDate';
 import styles from './CheckInPage.module.css';
 
 export default function CheckInPage() {
@@ -25,8 +26,8 @@ export default function CheckInPage() {
       const res = await receptionistApi.getReservations({ limit: 1000 });
       const raw = res.data?.data;
       const all = Array.isArray(raw) ? raw : (raw ? Object.values(raw) : []);
-      const today = new Date().toISOString().split('T')[0];
-      const arrivals = all.filter(r => r.check_in_date === today && r.status === 'confirmed');
+      const today = getLocalDateString();
+      const arrivals = all.filter(r => isSameDay(r.check_in_date || r.check_in, today) && r.status === 'confirmed');
       setReservations(arrivals);
     } catch (err) {
       addToast('Failed to load arrivals', 'error');

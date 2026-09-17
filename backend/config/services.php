@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'chapa' => [
+        'secret_key' => env('CHAPA_SECRET_KEY'),
+        'base_url' => env('CHAPA_BASE_URL', 'https://api.chapa.co/v1'),
+        'mode' => env('CHAPA_MODE', 'test'),
+        'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+    ],
+
 ];

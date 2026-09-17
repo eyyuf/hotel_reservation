@@ -1,32 +1,38 @@
 .tableContainer {
   width: 100%;
   overflow-x: auto;
-  border: 1px solid var(--color-gray-200);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
   background: var(--color-white);
+  box-shadow: var(--shadow-xs);
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
   width: 100%;
+  min-width: 600px;
   border-collapse: collapse;
   text-align: left;
+  font-size: var(--text-sm);
 }
 
 .th {
-  background-color: var(--color-gray-100);
-  color: var(--color-black);
-  font-weight: 500;
+  background-color: var(--color-gray-50);
+  color: var(--color-gray-700);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-gray-200);
-  position: sticky;
-  top: 0;
-  z-index: 1;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
 }
 
 .td {
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-gray-200);
+  border-bottom: 1px solid var(--border-color);
   color: var(--color-gray-800);
+  vertical-align: middle;
 }
 
 .tr:last-child .td {
@@ -38,41 +44,11 @@
 }
 
 .emptyState {
-  padding: var(--space-8);
+  padding: var(--space-10) var(--space-4);
   text-align: center;
+  font-size: var(--text-sm);
   color: var(--color-gray-500);
-  border: 1px solid var(--color-gray-200);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
   background: var(--color-white);
-}
-
-@media (max-width: 768px) {
-  .table, .table tbody, .table tr, .table td {
-    display: block;
-    width: 100%;
-  }
-
-  .table thead {
-    display: none;
-  }
-
-  .tr {
-    border-bottom: 1px solid var(--color-gray-200);
-    padding: var(--space-2) 0;
-  }
-
-  .td {
-    border-bottom: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-2) var(--space-4);
-  }
-
-  .td::before {
-    content: attr(data-label);
-    font-weight: 500;
-    color: var(--color-gray-600);
-    margin-right: var(--space-4);
-  }
 }

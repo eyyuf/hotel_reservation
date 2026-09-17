@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { reservationApi } from '../../../services/reservations/reservationApi';
-import { enrichReservation } from '../../../utils/enrichReservation';
+import { batchEnrichReservations } from '../../../utils/enrichReservation';
 import { formatDate } from '../../../utils/formatDate';
 import PageHeader from '../../../components/layout/PageHeader/PageHeader';
 import Skeleton from '../../../components/ui/Skeleton/Skeleton';
@@ -16,18 +16,29 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchReservations = async () => {
       try {
-        const reservationData = [];
-        let page = 1;
-        let lastPage = 1;
+        // Fetch page 1 first to learn total pages
+        const firstResponse = await reservationApi.getReservations({ page: 1 });
+        if (!isMounted) return;
+        const reservationData = [...(firstResponse.data?.data || [])];
+        const lastPage = firstResponse.data?.meta?.last_page || 1;
 
-        do {
-          const response = await reservationApi.getReservations({ page });
-          reservationData.push(...(response.data?.data || []));
-          lastPage = response.data?.meta?.last_page || 1;
-          page += 1;
-        } while (page <= lastPage);
+        // Fetch remaining pages in parallel (if any)
+        if (lastPage > 1) {
+          const remainingPages = Array.from({ length: lastPage - 1 }, (_, i) => i + 2);
+          const pageResults = await Promise.allSettled(
+            remainingPages.map((p) => reservationApi.getReservations({ page: p }))
+          );
+          if (!isMounted) return;
+          for (const result of pageResults) {
+            if (result.status === 'fulfilled') {
+              reservationData.push(...(result.value.data?.data || []));
+            }
+          }
+        }
 
         const localToday = new Date();
         const today = [
@@ -54,18 +65,27 @@ const DashboardPage = () => {
         const visibleReservations = nextReservation
           ? [nextReservation, ...recent]
           : recent;
-        const enrichedReservations = await Promise.all(visibleReservations.map(enrichReservation));
+        const enrichedReservations = await batchEnrichReservations(visibleReservations);
+        if (!isMounted) return;
         const byId = new Map(enrichedReservations.map((reservation) => [reservation.reservation_id, reservation]));
 
         setUpcomingReservation(nextReservation ? byId.get(nextReservation.reservation_id) : null);
         setRecentReservations(recent.map((reservation) => byId.get(reservation.reservation_id) || reservation));
       } catch (error) {
+        if (!isMounted) return;
         console.error('Failed to fetch reservations', error);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
+
     fetchReservations();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const getGreeting = () => {
@@ -108,7 +128,11 @@ const DashboardPage = () => {
               </div>
             </div>
             <div className={styles.upcomingFooter}>
-              <Link to={`/guest/reservations/${upcomingReservation.reservation_id}`} className={styles.viewLink}>
+              <Link 
+                to={`/guest/reservations/${upcomingReservation.reservation_id}`} 
+                state={{ reservation: upcomingReservation }}
+                className={styles.viewLink}
+              >
                 View reservation details &rarr;
               </Link>
             </div>
@@ -137,7 +161,13 @@ const DashboardPage = () => {
                   </div>
                   <div className={styles.recentAction}>
                     <Badge variant={res.status === 'cancelled' ? 'error' : 'default'}>{res.status}</Badge>
-                    <Link to={`/guest/reservations/${res.reservation_id}`} className={styles.viewLinkSimple}>View</Link>
+                    <Link 
+                      to={`/guest/reservations/${res.reservation_id}`} 
+                      state={{ reservation: res }}
+                      className={styles.viewLinkSimple}
+                    >
+                      View
+                    </Link>
                   </div>
                 </div>
               ))}
