@@ -315,6 +315,7 @@ class PaymentController extends Controller
 
             return response()->json([
                 'message' => 'Unable to initialize Chapa payment.',
+                'debug' => $e->getMessage(),
             ], 500);
         }
 

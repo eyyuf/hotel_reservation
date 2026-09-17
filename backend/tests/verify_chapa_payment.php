@@ -308,7 +308,9 @@ class ChapaPaymentTestRunner
 
         Http::fake([
             'https://api.chapa.co/v1/transaction/initialize' => Http::response([
-                'message' => 'Invalid public or secret key',
+                'message' => [
+                    'customization.description' => ['The customization.description must not exceed 50 characters.'],
+                ],
                 'status' => 'failed',
                 'data' => null,
             ], 400),
@@ -321,7 +323,8 @@ class ChapaPaymentTestRunner
         $response = $controller->initializeChapa($request, $payment, $this->chapaService);
         $content = $response->getContent();
 
-        $this->assert($response->getStatusCode() === 502, "Returns 502 Bad Gateway when Chapa fails");
+        $this->assert($response->getStatusCode() === 502, "Returns 502 Bad Gateway when Chapa fails with validation array");
+        $this->assert(str_contains($content, 'customization.description must not exceed 50 characters'), "Array validation message is safely flattened into string");
         $this->assert(!str_contains($content, 'CHASECK_'), "Response does not leak Chapa secret key");
     }
 

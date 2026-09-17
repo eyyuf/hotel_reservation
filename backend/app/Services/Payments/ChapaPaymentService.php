@@ -51,11 +51,17 @@ class ChapaPaymentService
 
         // Ensure unique transaction reference exists on payment
         $txRef = $payment->transaction_reference;
-        if (empty($txRef)) {
+        if (empty($txRef) || !str_starts_with($txRef, 'HOTEL-PAY-')) {
             $txRef = $this->generateTxRef($payment->id);
             $payment->transaction_reference = $txRef;
             $payment->save();
         }
+
+        $cleanRef = preg_replace('/[^a-zA-Z0-9\-_.]/', '', (string) $reservation->booking_reference);
+        $description = substr('Booking ' . $cleanRef, 0, 50);
+
+        $appName = preg_replace('/[^a-zA-Z0-9\-_ .]/', '', (string) config('app.name', 'Hotel Reservation'));
+        $title = substr($appName ?: 'Hotel Reservation', 0, 50);
 
         $payload = [
             'amount' => number_format((float) $payment->amount, 2, '.', ''),
@@ -66,8 +72,8 @@ class ChapaPaymentService
             'tx_ref' => $txRef,
             'return_url' => $this->frontendUrl . '/payment/verify?tx_ref=' . $txRef,
             'customization' => [
-                'title' => config('app.name', 'Hotel Reservation'),
-                'description' => 'Payment for Booking #' . $reservation->booking_reference,
+                'title' => $title,
+                'description' => $description,
             ],
             'meta' => [
                 'payment_id' => $payment->id,
@@ -91,7 +97,17 @@ class ChapaPaymentService
         }
 
         if ($response->failed() || $response->json('status') !== 'success') {
-            $message = $response->json('message') ?? 'Payment gateway error';
+            $rawMessage = $response->json('message');
+            if (is_array($rawMessage)) {
+                $messages = [];
+                array_walk_recursive($rawMessage, function ($val) use (&$messages) {
+                    $messages[] = (string) $val;
+                });
+                $message = implode(' ', $messages);
+            } else {
+                $message = (string) ($rawMessage ?? 'Payment gateway error');
+            }
+
             Log::warning('Chapa initialization rejected', [
                 'status' => $response->status(),
                 'message' => $message,
