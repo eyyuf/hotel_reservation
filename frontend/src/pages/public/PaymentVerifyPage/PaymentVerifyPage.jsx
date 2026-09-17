@@ -73,10 +73,17 @@ const PaymentVerifyPage = () => {
           ) : (
             <div>
               <AlertCircle size={56} className={styles.errorIcon} />
-              <h1 className={styles.title}>Payment Verification Issue</h1>
+              <h1 className={styles.title}>
+                {errorMessage.toLowerCase().includes('pending') ? 'Payment Pending Verification' : 'Payment Verification Issue'}
+              </h1>
               <p className={styles.subtitle}>{errorMessage}</p>
               <div className={styles.actions}>
-                <Button variant="primary" onClick={() => navigate('/guest/reservations')}>
+                {errorMessage.toLowerCase().includes('pending') && (
+                  <Button variant="primary" onClick={() => window.location.reload()}>
+                    Check Status Again
+                  </Button>
+                )}
+                <Button variant={errorMessage.toLowerCase().includes('pending') ? 'secondary' : 'primary'} onClick={() => navigate('/guest/reservations')}>
                   My Reservations
                 </Button>
                 <Button variant="secondary" onClick={() => navigate('/')}>

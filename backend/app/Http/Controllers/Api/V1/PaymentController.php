@@ -105,6 +105,13 @@ class PaymentController extends Controller
                 ], 422);
             }
 
+            if ($validated['payment_method'] === 'chapa' && abs((float) $validated['amount'] - $remainingAmount) >= 0.01) {
+                return response()->json([
+                    'message' => 'Chapa payments must cover the full remaining invoice balance.',
+                    'remaining_amount' => number_format($remainingAmount, 2, '.', ''),
+                ], 422);
+            }
+
             $paymentChannels = [
                 'card' => 'online',
                 'mobile_money' => 'mobile_app',
@@ -120,7 +127,9 @@ class PaymentController extends Controller
             $payment->payment_method = $validated['payment_method'];
             $payment->payment_channel = $paymentChannels[$validated['payment_method']];
             $payment->status = 'pending';
-            $payment->transaction_reference = 'HOTEL-PAY-' . Str::uuid();
+            $payment->transaction_reference = $validated['payment_method'] === 'chapa'
+                ? null
+                : 'PAY-' . Str::uuid();
 
             $payment->save();
 
@@ -297,10 +306,16 @@ class PaymentController extends Controller
                 $request->user(),
                 $payment->invoice->reservation
             );
-        } catch (\Throwable $e) {
+        } catch (\RuntimeException $e) {
             return response()->json([
                 'message' => $e->getMessage(),
             ], 502);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'message' => 'Unable to initialize Chapa payment.',
+            ], 500);
         }
 
         return response()->json([
@@ -375,17 +390,24 @@ class PaymentController extends Controller
 
         try {
             $verification = $chapaService->verifyTransaction($txRef);
-        } catch (\Throwable $e) {
+        } catch (\RuntimeException $e) {
             return response()->json([
                 'message' => $e->getMessage(),
             ], 502);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'message' => 'Unable to verify payment with Chapa.',
+            ], 500);
         }
 
         $innerData = $verification['data'] ?? $verification;
         $isApiSuccess = ($verification['status'] ?? '') === 'success';
-        $isTxSuccess = strtolower((string) ($innerData['status'] ?? '')) === 'success';
+        $gatewayStatus = strtolower((string) ($innerData['status'] ?? ''));
 
-        if (!$isApiSuccess || !$isTxSuccess) {
+        // If gateway explicitly confirmed failure or cancellation
+        if (in_array($gatewayStatus, ['failed', 'cancelled'], true) || ($verification['status'] ?? '') === 'failed') {
             $payment->status = 'failed';
             $payment->save();
 
@@ -397,6 +419,18 @@ class PaymentController extends Controller
                     'transaction_reference' => $txRef,
                 ],
             ], 422);
+        }
+
+        // If not successful and not explicitly failed, treat as pending
+        if (!$isApiSuccess || $gatewayStatus !== 'success') {
+            return response()->json([
+                'message' => 'Payment is still pending verification.',
+                'data' => [
+                    'payment_id' => $payment->id,
+                    'status' => 'pending',
+                    'transaction_reference' => $txRef,
+                ],
+            ], 202);
         }
 
         try {

@@ -51,7 +51,7 @@ class ChapaPaymentService
 
         // Ensure unique transaction reference exists on payment
         $txRef = $payment->transaction_reference;
-        if (empty($txRef) || !str_starts_with($txRef, 'HOTEL-PAY-')) {
+        if (empty($txRef)) {
             $txRef = $this->generateTxRef($payment->id);
             $payment->transaction_reference = $txRef;
             $payment->save();

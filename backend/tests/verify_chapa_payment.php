@@ -61,6 +61,7 @@ class ChapaPaymentTestRunner
         echo "Environment ready. Running Chapa payment tests...\n\n";
 
         $this->testCreateReservationAndPendingPayment();
+        $this->testChapaRejectsPartialAmount();
         $this->testInitializeChapaPayment();
         $this->testUnauthorizedGuestCannotInitializePayment();
         $this->testChapaInitializationFailureHandledSafely();
@@ -71,6 +72,7 @@ class ChapaPaymentTestRunner
         $this->testTxRefMismatchRejected();
         $this->testFailedChapaTransactionMarksPaymentFailed();
         $this->testInnerTransactionFailedMarksPaymentFailed();
+        $this->testPendingGatewayTransactionReturns202AndKeepsPending();
         $this->testVerifyChapaServerErrorPreservesPendingStatus();
         $this->testIdempotentVerification();
         $this->testSecretsNotExposed();
@@ -196,13 +198,37 @@ class ChapaPaymentTestRunner
         $this->assert(isset($data['data']['payment_id']), "Payment ID is present in response");
         $this->assert($data['data']['status'] === 'pending', "Payment is saved in 'pending' status");
         $this->assert(!isset($data['data']['checkout_url']), "Chapa checkout is NOT automatically created in guestStore");
-        $this->assert(str_starts_with($data['data']['transaction_reference'], 'HOTEL-PAY-'), "Unique transaction reference is assigned");
+        $this->assert(is_null($data['data']['transaction_reference']), "Transaction reference is null until Chapa initialization");
+    }
+
+    private function testChapaRejectsPartialAmount()
+    {
+        echo "Test 2: Chapa payments must cover the full remaining invoice balance\n";
+
+        $reservation = $this->createTestReservation($this->guestA);
+        $controller = new PaymentController();
+
+        $request = Request::create(
+            "/api/v1/guest/reservations/{$reservation->id}/payments",
+            'POST',
+            [
+                'amount' => 500.00, // partial amount when balance is 1000.00
+                'payment_method' => 'chapa',
+            ]
+        );
+        $request->setUserResolver(fn() => $this->guestA);
+
+        $response = $controller->guestStore($request, $reservation);
+        $data = json_decode($response->getContent(), true);
+
+        $this->assert($response->getStatusCode() === 422, "Partial amount for Chapa returns 422 Unprocessable Entity");
+        $this->assert(str_contains($data['message'] ?? '', 'full remaining invoice balance'), "Message indicates full balance required");
     }
 
     private function testInitializeChapaPayment()
     {
         $this->resetHttp();
-        echo "Test 2: Guest initializes Chapa checkout explicitly\n";
+        echo "Test 3: Guest initializes Chapa checkout explicitly\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $invoice = $reservation->invoice;
@@ -214,7 +240,7 @@ class ChapaPaymentTestRunner
         $payment->payment_method = 'chapa';
         $payment->payment_channel = 'online';
         $payment->status = 'pending';
-        $payment->transaction_reference = 'HOTEL-PAY-' . Str::uuid();
+        $payment->transaction_reference = null;
         $payment->save();
 
         Http::fake([
@@ -237,12 +263,13 @@ class ChapaPaymentTestRunner
         $this->assert($response->getStatusCode() === 200, "POST /guest/payments/{id}/initialize returns 200 OK");
         $this->assert(!empty($data['data']['checkout_url']), "Chapa checkout URL is returned");
         $this->assert($data['data']['checkout_url'] === 'https://checkout.chapa.co/checkout/payment/test-checkout-url-1234', "Checkout URL matches Chapa response");
+        $this->assert(str_starts_with($data['data']['transaction_reference'], 'HOTEL-PAY-'), "Unique transaction reference is assigned during Chapa initialization");
     }
 
     private function testUnauthorizedGuestCannotInitializePayment()
     {
         $this->resetHttp();
-        echo "Test 3: Guest B cannot initialize payment belonging to Guest A\n";
+        echo "Test 4: Guest B cannot initialize payment belonging to Guest A\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $payment = new Payment();
@@ -266,7 +293,7 @@ class ChapaPaymentTestRunner
     private function testChapaInitializationFailureHandledSafely()
     {
         $this->resetHttp();
-        echo "Test 4: Gateway initialization error is handled gracefully without leaking secrets\n";
+        echo "Test 5: Gateway initialization error is handled gracefully without leaking secrets\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $payment = new Payment();
@@ -301,7 +328,7 @@ class ChapaPaymentTestRunner
     private function testVerifyChapaSuccessfulPayment()
     {
         $this->resetHttp();
-        echo "Test 5: Verify payment transitions Payment to successful, Invoice to paid, Reservation to confirmed\n";
+        echo "Test 6: Verify payment transitions Payment to successful, Invoice to paid, Reservation to confirmed\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $txRef = 'HOTEL-PAY-' . Str::uuid();
@@ -353,7 +380,7 @@ class ChapaPaymentTestRunner
     private function testAmountMismatchRejected()
     {
         $this->resetHttp();
-        echo "Test 6: Amount mismatch from gateway is rejected\n";
+        echo "Test 7: Amount mismatch from gateway is rejected\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $txRef = 'HOTEL-PAY-' . Str::uuid();
@@ -397,7 +424,7 @@ class ChapaPaymentTestRunner
     private function testCurrencyMismatchRejected()
     {
         $this->resetHttp();
-        echo "Test 7: Currency mismatch (non-ETB) is rejected\n";
+        echo "Test 8: Currency mismatch (non-ETB) is rejected\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $txRef = 'HOTEL-PAY-' . Str::uuid();
@@ -438,7 +465,7 @@ class ChapaPaymentTestRunner
     private function testMissingTxRefRejected()
     {
         $this->resetHttp();
-        echo "Test 8: Missing transaction reference in Chapa response is rejected\n";
+        echo "Test 9: Missing transaction reference in Chapa response is rejected\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $txRef = 'HOTEL-PAY-' . Str::uuid();
@@ -479,7 +506,7 @@ class ChapaPaymentTestRunner
     private function testTxRefMismatchRejected()
     {
         $this->resetHttp();
-        echo "Test 9: Mismatched transaction reference in Chapa response is rejected\n";
+        echo "Test 10: Mismatched transaction reference in Chapa response is rejected\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $txRef = 'HOTEL-PAY-' . Str::uuid();
@@ -521,7 +548,7 @@ class ChapaPaymentTestRunner
     private function testFailedChapaTransactionMarksPaymentFailed()
     {
         $this->resetHttp();
-        echo "Test 10: Failed transaction status from gateway marks payment as failed\n";
+        echo "Test 11: Failed transaction status from gateway marks payment as failed\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $txRef = 'HOTEL-PAY-' . Str::uuid();
@@ -562,7 +589,7 @@ class ChapaPaymentTestRunner
     private function testInnerTransactionFailedMarksPaymentFailed()
     {
         $this->resetHttp();
-        echo "Test 11: Top-level success but inner data.status='failed' marks payment as failed\n";
+        echo "Test 12: Top-level success but inner data.status='failed' marks payment as failed\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $txRef = 'HOTEL-PAY-' . Str::uuid();
@@ -602,10 +629,55 @@ class ChapaPaymentTestRunner
         $this->assert($invoice->status === 'unpaid', "Invoice status remains 'unpaid'");
     }
 
+    private function testPendingGatewayTransactionReturns202AndKeepsPending()
+    {
+        $this->resetHttp();
+        echo "Test 13: Gateway returning pending transaction status returns 202 and preserves pending status\n";
+
+        $reservation = $this->createTestReservation($this->guestA);
+        $txRef = 'HOTEL-PAY-' . Str::uuid();
+
+        $payment = new Payment();
+        $payment->invoice_id = $reservation->invoice->id;
+        $payment->recorded_by_user_id = $this->guestA->id;
+        $payment->amount = 1000.00;
+        $payment->payment_method = 'chapa';
+        $payment->payment_channel = 'online';
+        $payment->status = 'pending';
+        $payment->transaction_reference = $txRef;
+        $payment->save();
+
+        Http::fake([
+            "https://api.chapa.co/v1/transaction/verify/{$txRef}" => Http::response([
+                'message' => 'Payment is pending',
+                'status' => 'success',
+                'data' => [
+                    'status' => 'pending',
+                    'tx_ref' => $txRef,
+                    'currency' => 'ETB',
+                    'amount' => 1000.00,
+                ],
+            ], 200),
+        ]);
+
+        $controller = new PaymentController();
+        $request = Request::create("/api/v1/payments/chapa/verify/{$txRef}", 'GET');
+        $response = $controller->verifyChapa($request, $txRef, $this->chapaService);
+        $data = json_decode($response->getContent(), true);
+
+        $payment->refresh();
+        $invoice = $payment->invoice->fresh();
+
+        $this->assert($response->getStatusCode() === 202, "Pending transaction returns 202 Accepted");
+        $this->assert($payment->status === 'pending', "Payment status remains 'pending'");
+        $this->assert($invoice->status === 'unpaid', "Invoice status remains 'unpaid'");
+        $this->assert(str_contains($data['message'] ?? '', 'pending verification'), "Message explains pending verification");
+    }
+
     private function testVerifyChapaServerErrorPreservesPendingStatus()
     {
         $this->resetHttp();
-        echo "Test 12: Gateway 5xx server error during verify returns 502 and keeps payment pending\n";
+        echo "Test 14: Gateway 5xx server error during verify returns 502 and keeps payment pending\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $txRef = 'HOTEL-PAY-' . Str::uuid();
@@ -641,7 +713,7 @@ class ChapaPaymentTestRunner
     private function testIdempotentVerification()
     {
         $this->resetHttp();
-        echo "Test 13: Calling verification on already successful payment is idempotent\n";
+        echo "Test 15: Calling verification on already successful payment is idempotent\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $txRef = 'HOTEL-PAY-' . Str::uuid();
@@ -680,7 +752,7 @@ class ChapaPaymentTestRunner
     private function testSecretsNotExposed()
     {
         $this->resetHttp();
-        echo "Test 14: Secret keys are never exposed in API responses or logs\n";
+        echo "Test 16: Secret keys are never exposed in API responses or logs\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $txRef = 'HOTEL-PAY-' . Str::uuid();
