@@ -128,7 +128,15 @@ Route::prefix('v1/guest')
         Route::get('reservations/{reservation}/payments', [PaymentController::class, 'guestIndex']);
         Route::post('reservations/{reservation}/payments', [PaymentController::class, 'guestStore']);
         Route::get('payments/{payment}', [PaymentController::class, 'guestShow']);
+        Route::post('payments/{payment}/initialize', [PaymentController::class, 'initializeChapa']);
     });
+
+/*
+|--------------------------------------------------------------------------
+| Chapa payment verification route
+|--------------------------------------------------------------------------
+*/
+Route::get('/v1/payments/chapa/verify/{tx_ref}', [PaymentController::class, 'verifyChapa']);
 
 /*
 |--------------------------------------------------------------------------

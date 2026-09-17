@@ -32,21 +32,25 @@ const PaymentPage = () => {
       };
       
       const response = await reservationApi.createPayment(reservation.reservation_id, paymentData);
-      
-      // Simulate successful payment completion
       const paymentId = response.data?.data?.payment_id;
-      if (paymentId) {
-        try {
-          await paymentApi.simulatePayment(paymentId);
-        } catch (simErr) {
-          console.warn('Payment simulation skipped:', simErr.response?.data?.message);
-        }
-      }
       
-      navigate('/confirmation', { state: { reservation, hotel, roomType, paymentSuccess: true } });
+      if (!paymentId) {
+        throw new Error('Payment initiation failed.');
+      }
+
+      // Initialize Chapa checkout
+      const initResponse = await paymentApi.initializePayment(paymentId);
+      const checkoutUrl = initResponse.data?.data?.checkout_url;
+
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+        return;
+      }
+
+      throw new Error('Did not receive a valid checkout URL from Chapa.');
     } catch (error) {
-      console.error('Payment error:', error.response?.data);
-      const errMsg = error.response?.data?.message || '';
+      console.error('Payment error:', error.response?.data || error.message);
+      const errMsg = error.response?.data?.message || error.message || '';
       
       // If invoice not found, it means payment will be handled at check-in
       if (errMsg.includes('Invoice not found')) {
