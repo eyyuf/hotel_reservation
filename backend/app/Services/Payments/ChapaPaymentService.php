@@ -23,7 +23,7 @@ class ChapaPaymentService
     {
         $this->secretKey = (string) config('services.chapa.secret_key', '');
         $this->baseUrl = rtrim((string) config('services.chapa.base_url', 'https://api.chapa.co/v1'), '/');
-        $this->frontendUrl = rtrim((string) config('services.chapa.frontend_url', 'http://localhost:5173'), '/');
+        $this->frontendUrl = rtrim((string) config('services.chapa.frontend_url', 'https://adar-hotels.vercel.app'), '/');
     }
 
     /**
