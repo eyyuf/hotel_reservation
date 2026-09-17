@@ -647,18 +647,25 @@ class ChapaPaymentTestRunner
         $payment->transaction_reference = $txRef;
         $payment->save();
 
+        $rawGatewayResponse = [
+            'message' => 'Payment is pending',
+            'status' => 'pending',
+            'data' => [
+                'status' => 'pending',
+                'tx_ref' => $txRef,
+                'currency' => 'ETB',
+                'amount' => 1000.00,
+            ],
+        ];
+
         Http::fake([
-            "https://api.chapa.co/v1/transaction/verify/{$txRef}" => Http::response([
-                'message' => 'Payment is pending',
-                'status' => 'success',
-                'data' => [
-                    'status' => 'pending',
-                    'tx_ref' => $txRef,
-                    'currency' => 'ETB',
-                    'amount' => 1000.00,
-                ],
-            ], 200),
+            "https://api.chapa.co/v1/transaction/verify/{$txRef}" => Http::response($rawGatewayResponse, 200),
         ]);
+
+        // Service preserves actual JSON response without fabricating status => failed
+        $serviceResult = $this->chapaService->verifyTransaction($txRef);
+        $this->assert($serviceResult['status'] === 'pending', "Service preserves actual gateway status");
+        $this->assert(isset($serviceResult['data']), "Service preserves actual gateway data payload");
 
         $controller = new PaymentController();
         $request = Request::create("/api/v1/payments/chapa/verify/{$txRef}", 'GET');

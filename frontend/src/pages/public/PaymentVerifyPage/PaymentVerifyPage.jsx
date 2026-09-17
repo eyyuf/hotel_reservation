@@ -14,11 +14,13 @@ const PaymentVerifyPage = () => {
   const txRef = searchParams.get('tx_ref');
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState(null);
   const verifiedRef = useRef(false);
 
   useEffect(() => {
     if (!txRef) {
       setLoading(false);
+      setPaymentStatus('failed');
       setErrorMessage('Missing transaction reference in return URL.');
       return;
     }
@@ -42,13 +44,19 @@ const PaymentVerifyPage = () => {
             },
             replace: true,
           });
-        } else {
-          setErrorMessage(response.data?.message || 'Payment was not marked successful.');
-          setLoading(false);
+          return;
         }
+
+        setPaymentStatus(data?.status || 'failed');
+        setErrorMessage(response.data?.message || 'Payment was not marked successful.');
+        setLoading(false);
       } catch (err) {
         console.error('Payment verification failed:', err);
-        const msg = err.response?.data?.message || 'Payment verification failed.';
+        const responseData = err.response?.data;
+        const status = responseData?.data?.status;
+
+        setPaymentStatus(status || 'failed');
+        const msg = responseData?.message || 'Payment verification failed.';
         setErrorMessage(msg);
         showToast(msg, 'error');
         setLoading(false);
@@ -57,6 +65,8 @@ const PaymentVerifyPage = () => {
 
     verify();
   }, [txRef, navigate, showToast]);
+
+  const isPending = paymentStatus === 'pending';
 
   return (
     <div className={styles.page}>
@@ -74,16 +84,16 @@ const PaymentVerifyPage = () => {
             <div>
               <AlertCircle size={56} className={styles.errorIcon} />
               <h1 className={styles.title}>
-                {errorMessage.toLowerCase().includes('pending') ? 'Payment Pending Verification' : 'Payment Verification Issue'}
+                {isPending ? 'Payment Pending Verification' : 'Payment Verification Issue'}
               </h1>
               <p className={styles.subtitle}>{errorMessage}</p>
               <div className={styles.actions}>
-                {errorMessage.toLowerCase().includes('pending') && (
+                {isPending && (
                   <Button variant="primary" onClick={() => window.location.reload()}>
                     Check Status Again
                   </Button>
                 )}
-                <Button variant={errorMessage.toLowerCase().includes('pending') ? 'secondary' : 'primary'} onClick={() => navigate('/guest/reservations')}>
+                <Button variant={isPending ? 'secondary' : 'primary'} onClick={() => navigate('/guest/reservations')}>
                   My Reservations
                 </Button>
                 <Button variant="secondary" onClick={() => navigate('/')}>

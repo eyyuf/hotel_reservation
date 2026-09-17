@@ -138,15 +138,7 @@ class ChapaPaymentService
             throw new RuntimeException('Chapa verification service temporarily unavailable.');
         }
 
-        if ($response->failed() || $response->json('status') !== 'success') {
-            return [
-                'status' => 'failed',
-                'message' => $response->json('message') ?? 'Verification failed',
-                'raw' => $response->json(),
-            ];
-        }
-
-        return $response->json();
+        return $response->json() ?? [];
     }
 
     /**
