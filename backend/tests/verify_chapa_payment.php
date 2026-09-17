@@ -67,7 +67,10 @@ class ChapaPaymentTestRunner
         $this->testVerifyChapaSuccessfulPayment();
         $this->testAmountMismatchRejected();
         $this->testCurrencyMismatchRejected();
+        $this->testMissingTxRefRejected();
+        $this->testTxRefMismatchRejected();
         $this->testFailedChapaTransactionMarksPaymentFailed();
+        $this->testInnerTransactionFailedMarksPaymentFailed();
         $this->testVerifyChapaServerErrorPreservesPendingStatus();
         $this->testIdempotentVerification();
         $this->testSecretsNotExposed();
@@ -432,10 +435,93 @@ class ChapaPaymentTestRunner
         $this->assert($payment->status === 'pending', "Payment is NOT marked successful");
     }
 
+    private function testMissingTxRefRejected()
+    {
+        $this->resetHttp();
+        echo "Test 8: Missing transaction reference in Chapa response is rejected\n";
+
+        $reservation = $this->createTestReservation($this->guestA);
+        $txRef = 'HOTEL-PAY-' . Str::uuid();
+
+        $payment = new Payment();
+        $payment->invoice_id = $reservation->invoice->id;
+        $payment->recorded_by_user_id = $this->guestA->id;
+        $payment->amount = 1000.00;
+        $payment->payment_method = 'chapa';
+        $payment->payment_channel = 'online';
+        $payment->status = 'pending';
+        $payment->transaction_reference = $txRef;
+        $payment->save();
+
+        Http::fake([
+            "https://api.chapa.co/v1/transaction/verify/{$txRef}" => Http::response([
+                'message' => 'Payment details retrieved',
+                'status' => 'success',
+                'data' => [
+                    'currency' => 'ETB',
+                    'amount' => 1000.00,
+                    'status' => 'success',
+                ],
+            ], 200),
+        ]);
+
+        $controller = new PaymentController();
+        $request = Request::create("/api/v1/payments/chapa/verify/{$txRef}", 'GET');
+        $response = $controller->verifyChapa($request, $txRef, $this->chapaService);
+        $data = json_decode($response->getContent(), true);
+
+        $payment->refresh();
+        $this->assert($response->getStatusCode() === 422, "Missing tx_ref returns 422 Unprocessable Entity");
+        $this->assert(str_contains($data['message'] ?? '', 'missing transaction reference'), "Error message notes missing tx_ref");
+        $this->assert($payment->status === 'pending', "Payment status remains 'pending'");
+    }
+
+    private function testTxRefMismatchRejected()
+    {
+        $this->resetHttp();
+        echo "Test 9: Mismatched transaction reference in Chapa response is rejected\n";
+
+        $reservation = $this->createTestReservation($this->guestA);
+        $txRef = 'HOTEL-PAY-' . Str::uuid();
+
+        $payment = new Payment();
+        $payment->invoice_id = $reservation->invoice->id;
+        $payment->recorded_by_user_id = $this->guestA->id;
+        $payment->amount = 1000.00;
+        $payment->payment_method = 'chapa';
+        $payment->payment_channel = 'online';
+        $payment->status = 'pending';
+        $payment->transaction_reference = $txRef;
+        $payment->save();
+
+        Http::fake([
+            "https://api.chapa.co/v1/transaction/verify/{$txRef}" => Http::response([
+                'message' => 'Payment details retrieved',
+                'status' => 'success',
+                'data' => [
+                    'currency' => 'ETB',
+                    'amount' => 1000.00,
+                    'status' => 'success',
+                    'tx_ref' => 'HOTEL-PAY-DIFFERENT-REF-1234',
+                ],
+            ], 200),
+        ]);
+
+        $controller = new PaymentController();
+        $request = Request::create("/api/v1/payments/chapa/verify/{$txRef}", 'GET');
+        $response = $controller->verifyChapa($request, $txRef, $this->chapaService);
+        $data = json_decode($response->getContent(), true);
+
+        $payment->refresh();
+        $this->assert($response->getStatusCode() === 422, "Mismatched tx_ref returns 422 Unprocessable Entity");
+        $this->assert(str_contains($data['message'] ?? '', 'mismatch'), "Error message notes tx_ref mismatch");
+        $this->assert($payment->status === 'pending', "Payment status remains 'pending'");
+    }
+
     private function testFailedChapaTransactionMarksPaymentFailed()
     {
         $this->resetHttp();
-        echo "Test 8: Failed transaction status from gateway marks payment as failed\n";
+        echo "Test 10: Failed transaction status from gateway marks payment as failed\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $txRef = 'HOTEL-PAY-' . Str::uuid();
@@ -473,10 +559,53 @@ class ChapaPaymentTestRunner
         $this->assert($invoice->status === 'unpaid', "Invoice status remains 'unpaid'");
     }
 
+    private function testInnerTransactionFailedMarksPaymentFailed()
+    {
+        $this->resetHttp();
+        echo "Test 11: Top-level success but inner data.status='failed' marks payment as failed\n";
+
+        $reservation = $this->createTestReservation($this->guestA);
+        $txRef = 'HOTEL-PAY-' . Str::uuid();
+
+        $payment = new Payment();
+        $payment->invoice_id = $reservation->invoice->id;
+        $payment->recorded_by_user_id = $this->guestA->id;
+        $payment->amount = 1000.00;
+        $payment->payment_method = 'chapa';
+        $payment->payment_channel = 'online';
+        $payment->status = 'pending';
+        $payment->transaction_reference = $txRef;
+        $payment->save();
+
+        Http::fake([
+            "https://api.chapa.co/v1/transaction/verify/{$txRef}" => Http::response([
+                'message' => 'Transaction details retrieved',
+                'status' => 'success',
+                'data' => [
+                    'status' => 'failed',
+                    'tx_ref' => $txRef,
+                    'currency' => 'ETB',
+                    'amount' => 1000.00,
+                ],
+            ], 200),
+        ]);
+
+        $controller = new PaymentController();
+        $request = Request::create("/api/v1/payments/chapa/verify/{$txRef}", 'GET');
+        $response = $controller->verifyChapa($request, $txRef, $this->chapaService);
+
+        $payment->refresh();
+        $invoice = $payment->invoice->fresh();
+
+        $this->assert($response->getStatusCode() === 422, "Failed inner transaction returns 422");
+        $this->assert($payment->status === 'failed', "Payment status is updated to 'failed'");
+        $this->assert($invoice->status === 'unpaid', "Invoice status remains 'unpaid'");
+    }
+
     private function testVerifyChapaServerErrorPreservesPendingStatus()
     {
         $this->resetHttp();
-        echo "Test 9: Gateway 5xx server error during verify returns 502 and keeps payment pending\n";
+        echo "Test 12: Gateway 5xx server error during verify returns 502 and keeps payment pending\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $txRef = 'HOTEL-PAY-' . Str::uuid();
@@ -512,7 +641,7 @@ class ChapaPaymentTestRunner
     private function testIdempotentVerification()
     {
         $this->resetHttp();
-        echo "Test 10: Calling verification on already successful payment is idempotent\n";
+        echo "Test 13: Calling verification on already successful payment is idempotent\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $txRef = 'HOTEL-PAY-' . Str::uuid();
@@ -551,7 +680,7 @@ class ChapaPaymentTestRunner
     private function testSecretsNotExposed()
     {
         $this->resetHttp();
-        echo "Test 11: Secret keys are never exposed in API responses or logs\n";
+        echo "Test 14: Secret keys are never exposed in API responses or logs\n";
 
         $reservation = $this->createTestReservation($this->guestA);
         $txRef = 'HOTEL-PAY-' . Str::uuid();

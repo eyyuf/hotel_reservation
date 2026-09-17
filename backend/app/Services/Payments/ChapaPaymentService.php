@@ -162,7 +162,11 @@ class ChapaPaymentService
         }
 
         $chapaTxRef = (string) ($data['tx_ref'] ?? '');
-        if (!empty($chapaTxRef) && $chapaTxRef !== (string) $payment->transaction_reference) {
+        if ($chapaTxRef === '') {
+            throw new InvalidArgumentException('Chapa response is missing transaction reference.');
+        }
+
+        if ($chapaTxRef !== (string) $payment->transaction_reference) {
             throw new InvalidArgumentException('Transaction reference mismatch.');
         }
 
@@ -177,11 +181,6 @@ class ChapaPaymentService
             throw new InvalidArgumentException(
                 sprintf('Amount mismatch: expected %.2f, received %.2f', $expectedAmount, $chapaAmount)
             );
-        }
-
-        // Idempotency: if already successful, skip mutation
-        if ($payment->status === 'successful') {
-            return true;
         }
 
         return DB::transaction(function () use ($payment) {

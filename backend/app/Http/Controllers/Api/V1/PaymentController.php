@@ -381,7 +381,11 @@ class PaymentController extends Controller
             ], 502);
         }
 
-        if (($verification['status'] ?? '') !== 'success') {
+        $innerData = $verification['data'] ?? $verification;
+        $isApiSuccess = ($verification['status'] ?? '') === 'success';
+        $isTxSuccess = strtolower((string) ($innerData['status'] ?? '')) === 'success';
+
+        if (!$isApiSuccess || !$isTxSuccess) {
             $payment->status = 'failed';
             $payment->save();
 
