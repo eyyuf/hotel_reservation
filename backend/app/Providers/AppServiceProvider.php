@@ -25,6 +25,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Tell artisan serve to pass through these variables to the child process.
+        // AletCloud runs via artisan serve, which strips unknown env vars.
+        if ($this->app->runningInConsole() && class_exists(\Illuminate\Foundation\Console\ServeCommand::class)) {
+            \Illuminate\Foundation\Console\ServeCommand::$passthroughVariables = array_unique(array_merge(
+                \Illuminate\Foundation\Console\ServeCommand::$passthroughVariables,
+                ['CHAPA_SECRET_KEY', 'CHAPA_BASE_URL', 'CHAPA_MODE', 'FRONTEND_URL', 'FILESYSTEM_DISK', 'CLOUDFLARE_R2_ACCESS_KEY_ID', 'CLOUDFLARE_R2_SECRET_ACCESS_KEY', 'CLOUDFLARE_R2_BUCKET', 'CLOUDFLARE_R2_ENDPOINT', 'CLOUDFLARE_R2_URL']
+            ));
+        }
+
         $this->ensureChapaConfig();
     }
 

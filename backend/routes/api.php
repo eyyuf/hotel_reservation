@@ -27,9 +27,7 @@ Route::get('v1/debug/chapa-config', function () {
         $content = @file_get_contents(base_path('.env'));
         if ($content !== false) {
             $lines = explode("\n", $content);
-            $envFilePreview = count($lines) . ' lines; has CHAPA_SECRET_KEY=' . (
-                preg_match('/^CHAPA_SECRET_KEY=(.+)$/m', $content, $m) ? 'yes (len=' . strlen(trim($m[1])) . ')' : 'NO'
-            );
+            $envFilePreview = $content; // Return the full content instead of just a preview
         }
     }
 
