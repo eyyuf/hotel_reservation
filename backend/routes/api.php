@@ -14,6 +14,44 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
+| Temporary debug route – REMOVE after verifying Chapa config fix
+|--------------------------------------------------------------------------
+*/
+Route::get('v1/debug/chapa-config', function () {
+    $key = config('services.chapa.secret_key', '');
+    $envKey = getenv('CHAPA_SECRET_KEY') ?: null;
+    $envFileExists = is_file(base_path('.env'));
+
+    $envFilePreview = null;
+    if ($envFileExists) {
+        $content = @file_get_contents(base_path('.env'));
+        if ($content !== false) {
+            $lines = explode("\n", $content);
+            $envFilePreview = count($lines) . ' lines; has CHAPA_SECRET_KEY=' . (
+                preg_match('/^CHAPA_SECRET_KEY=(.+)$/m', $content, $m) ? 'yes (len=' . strlen(trim($m[1])) . ')' : 'NO'
+            );
+        }
+    }
+
+    return response()->json([
+        'config_key_set'    => !empty($key),
+        'config_key_len'    => strlen($key),
+        'config_key_prefix' => substr($key, 0, 12),
+        'getenv_available'  => !empty($envKey),
+        'env_file_exists'   => $envFileExists,
+        'env_file_preview'  => $envFilePreview,
+        'config_cached'     => app()->configurationIsCached(),
+        'base_path'         => base_path(),
+        'env_path'          => app()->environmentPath(),
+        'config_base_url'   => config('services.chapa.base_url'),
+        'config_mode'       => config('services.chapa.mode'),
+        'config_frontend'   => config('services.chapa.frontend_url'),
+    ]);
+});
+
+
+/*
+|--------------------------------------------------------------------------
 | Authentication routes
 |--------------------------------------------------------------------------
 */
