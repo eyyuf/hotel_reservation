@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 import { paymentApi } from '../../../services/payments/paymentApi';
 import { useToast } from '../../../context/ToastContext';
 import Button from '../../../components/ui/Button/Button';
@@ -15,6 +15,7 @@ const PaymentVerifyPage = () => {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [paymentStatus, setPaymentStatus] = useState(null);
+  const [verifiedData, setVerifiedData] = useState(null);
   const verifiedRef = useRef(false);
 
   useEffect(() => {
@@ -34,16 +35,9 @@ const PaymentVerifyPage = () => {
         const data = response.data?.data;
 
         if (data?.status === 'successful') {
-          showToast('Payment confirmed successfully!', 'success');
-          navigate('/confirmation', {
-            state: {
-              reservation: data.reservation,
-              hotel: data.hotel,
-              roomType: data.room_type,
-              paymentSuccess: true,
-            },
-            replace: true,
-          });
+          setPaymentStatus('successful');
+          setVerifiedData(data);
+          setLoading(false);
           return;
         }
 
@@ -79,6 +73,38 @@ const PaymentVerifyPage = () => {
               <p className={styles.subtitle}>
                 Please wait while we confirm your payment with Chapa...
               </p>
+            </div>
+          ) : paymentStatus === 'successful' ? (
+            <div>
+              <CheckCircle size={56} style={{ color: '#16a34a', margin: '0 auto 16px', display: 'block' }} />
+              <h1 className={styles.title}>Payment Confirmed</h1>
+              <p className={styles.subtitle}>
+                Your payment for booking #{verifiedData?.reservation?.booking_reference || ''} has been confirmed.
+              </p>
+              {verifiedData?.transaction_reference && (
+                <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '8px' }}>
+                  Reference: {verifiedData.transaction_reference}
+                </p>
+              )}
+              <div className={styles.actions}>
+                <Button 
+                  variant="primary" 
+                  onClick={() => navigate('/confirmation', {
+                    state: {
+                      reservation: verifiedData?.reservation,
+                      hotel: verifiedData?.hotel,
+                      roomType: verifiedData?.room_type,
+                      paymentSuccess: true,
+                    },
+                    replace: true,
+                  })}
+                >
+                  View Reservation Confirmation
+                </Button>
+                <Button variant="secondary" onClick={() => navigate('/guest/reservations')}>
+                  My Reservations
+                </Button>
+              </div>
             </div>
           ) : (
             <div>
