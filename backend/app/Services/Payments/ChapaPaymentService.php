@@ -70,7 +70,6 @@ class ChapaPaymentService
             'first_name' => $guest->first_name ?: 'Guest',
             'last_name' => $guest->last_name ?: 'User',
             'tx_ref' => $txRef,
-            'return_url' => $this->frontendUrl . '/payment/verify?tx_ref=' . $txRef,
             'customization' => [
                 'title' => $title,
                 'description' => $description,

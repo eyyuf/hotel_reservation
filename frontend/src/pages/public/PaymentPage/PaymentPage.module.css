@@ -111,6 +111,32 @@
   margin-top: var(--space-6);
 }
 
+.infoNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-md);
+  color: #1e40af;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: var(--space-4);
+}
+
+.noticeIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #2563eb;
+}
+
+.buttonStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .summaryItem {
   display: flex;
   justify-content: space-between;
