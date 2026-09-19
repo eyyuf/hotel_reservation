@@ -80,7 +80,9 @@
   padding-top: var(--space-6);
   border-top: 1px solid var(--color-gray-100);
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: var(--space-3);
 }
 
 .skeletonGrid {

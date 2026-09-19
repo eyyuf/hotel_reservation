@@ -30,6 +30,12 @@
   border-bottom-color: var(--color-black);
 }
 
+.actionCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .actionLink {
   color: var(--color-gray-600);
   text-decoration: none;
