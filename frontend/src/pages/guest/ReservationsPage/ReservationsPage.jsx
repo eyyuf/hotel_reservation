@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { reservationApi } from '../../../services/reservations/reservationApi';
 import { batchEnrichReservations } from '../../../utils/enrichReservation';
 import { formatDate } from '../../../utils/formatDate';
 import PageHeader from '../../../components/layout/PageHeader/PageHeader';
 import Table from '../../../components/ui/Table/Table';
 import Badge from '../../../components/ui/Badge/Badge';
+import Button from '../../../components/ui/Button/Button';
 import Pagination from '../../../components/ui/Pagination/Pagination';
 import styles from './ReservationsPage.module.css';
 
 const ReservationsPage = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('upcoming');
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +68,19 @@ const ReservationsPage = () => {
     return <Badge variant={variants[status] || 'default'}>{status}</Badge>;
   };
 
+  const handlePayNow = (reservation) => {
+    navigate('/payment', {
+      state: {
+        reservation: {
+          ...reservation,
+          reservation_id: reservation.reservation_id || reservation.id,
+        },
+        hotel: reservation.hotel,
+        roomType: reservation.room_type,
+      },
+    });
+  };
+
   const columns = [
     { key: 'booking_reference', label: 'Booking Ref' },
     { 
@@ -83,13 +98,24 @@ const ReservationsPage = () => {
     {
       key: 'action', label: 'Action',
       render: (row) => (
-        <Link 
-          to={`/guest/reservations/${row.reservation_id}`} 
-          state={{ reservation: row }}
-          className={styles.actionLink}
-        >
-          View
-        </Link>
+        <div className={styles.actionCell}>
+          {row.status === 'pending' && (
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => handlePayNow(row)}
+            >
+              Pay Now
+            </Button>
+          )}
+          <Link 
+            to={`/guest/reservations/${row.reservation_id || row.id}`} 
+            state={{ reservation: row }}
+            className={styles.actionLink}
+          >
+            View
+          </Link>
+        </div>
       )
     }
   ];

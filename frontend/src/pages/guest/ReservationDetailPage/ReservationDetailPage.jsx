@@ -99,6 +99,19 @@ const ReservationDetailPage = () => {
     }
   };
 
+  const handlePayNow = () => {
+    navigate('/payment', {
+      state: {
+        reservation: {
+          ...reservation,
+          reservation_id: reservation.reservation_id || reservation.id,
+        },
+        hotel: reservation.hotel,
+        roomType: reservation.room_type,
+      },
+    });
+  };
+
   if (loading) {
     return (
       <div className={styles.page}>
@@ -173,11 +186,18 @@ const ReservationDetailPage = () => {
           </div>
         )}
 
-        {canCancel && (
+        {(reservation.status === 'pending' || canCancel) && (
           <div className={styles.actions}>
-            <Button variant="danger" onClick={() => setIsCancelDialogOpen(true)}>
-              Cancel reservation
-            </Button>
+            {reservation.status === 'pending' && (
+              <Button variant="primary" onClick={handlePayNow}>
+                Pay Now
+              </Button>
+            )}
+            {canCancel && (
+              <Button variant="danger" onClick={() => setIsCancelDialogOpen(true)}>
+                Cancel reservation
+              </Button>
+            )}
           </div>
         )}
       </div>
