@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { reservationApi } from '../../../services/reservations/reservationApi';
@@ -17,7 +17,6 @@ const ReservationDetailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
-  const hasLoggedDevRef = useRef(false);
 
   // Reuse reservation data passed from parent/list if available for instant display
   const passedReservation = location.state?.reservation;
@@ -38,33 +37,6 @@ const ReservationDetailPage = () => {
       const enriched = await enrichReservation(reservationDetails);
       if (!isMounted) return;
       setReservation(enriched);
-
-      if (import.meta.env.DEV && !hasLoggedDevRef.current) {
-        hasLoggedDevRef.current = true;
-        const [invoiceResult, paymentsResult] = await Promise.allSettled([
-          reservationApi.getInvoice(id),
-          reservationApi.getPayments(id),
-        ]);
-        const invoice = invoiceResult.status === 'fulfilled' ? invoiceResult.value.data?.data : null;
-        const paymentIds = paymentsResult.status === 'fulfilled'
-          ? (paymentsResult.value.data?.data?.payments ?? [])
-            .map((payment) => payment.payment_id)
-            .filter(Boolean)
-          : [];
-
-        void fetch('/__dev/reservation-log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            reservation_id: reservationDetails.reservation_id,
-            hotel_id: reservationDetails.hotel_id,
-            room_type_id: reservationDetails.room_type_id,
-            invoice_id: invoice?.id ?? null,
-            payment_ids: paymentIds,
-            sanctum_token: localStorage.getItem('auth_token'),
-          }),
-        }).catch(() => {});
-      }
     } catch (error) {
       if (!isMounted) return;
       showToast('Failed to load reservation details.', 'error');

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { reservationApi } from '../../../services/reservations/reservationApi';
 import { batchEnrichReservations } from '../../../utils/enrichReservation';
@@ -68,7 +68,7 @@ const ReservationsPage = () => {
     return <Badge variant={variants[status] || 'default'}>{status}</Badge>;
   };
 
-  const handlePayNow = (reservation) => {
+  const handlePayNow = useCallback((reservation) => {
     navigate('/payment', {
       state: {
         reservation: {
@@ -79,9 +79,9 @@ const ReservationsPage = () => {
         roomType: reservation.room_type,
       },
     });
-  };
+  }, [navigate]);
 
-  const columns = [
+  const columns = useMemo(() => [
     { key: 'booking_reference', label: 'Booking Ref' },
     { 
       key: 'hotel', label: 'Hotel', 
@@ -118,7 +118,7 @@ const ReservationsPage = () => {
         </div>
       )
     }
-  ];
+  ], [handlePayNow]);
 
   return (
     <div className={styles.page}>
